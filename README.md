@@ -72,6 +72,12 @@ d:\khim project\
 
 ---
 
+## 📖 คู่มือการเรียนรู้และอธิบายโค้ด
+สำหรับผู้ที่ต้องการศึกษาโครงสร้างการเขียนโค้ด Tkinter, Visual Novel Engine, และ Mini-games แบบเจาะลึกทุกไฟล์ สามารถอ่านเพิ่มเติมได้ที่:  
+👉 **[คู่มืออธิบายโค้ดอย่างละเอียด (CODE_EXPLANATION.md)](file:///d:/khim%20project/CODE_EXPLANATION.md)**
+
+---
+
 ## 🚀 วิธีการเข้าเล่นเกม
 
 เปิด Terminal หรือ Command Prompt ในโฟลเดอร์โปรเจกต์ แล้วพิมพ์คำสั่ง:
@@ -79,3 +85,4 @@ d:\khim project\
 ```bash
 python main.py
 ```
+
