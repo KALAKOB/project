@@ -1,0 +1,31 @@
+{
+    "player_name": "miu",
+    "score": 455,
+    "relationship": 162,
+    "current_scene": "finished",
+    "scene_step": 0,
+    "completed_scenes": [
+        "scene1",
+        "scene2",
+        "scene3"
+    ],
+    "inventory": [
+        "item_para",
+        "item_nss",
+        "item_carbon",
+        "item_cetirizine",
+        "item_para_syrup",
+        "item_betadine",
+        "item_cpm",
+        "item_gauze_kit",
+        "item_antacid",
+        "item_burn_cream",
+        "item_counterpain",
+        "item_calamine",
+        "item_ors",
+        "item_caffeine"
+    ],
+    "remaining_budget": 285,
+    "playtime_notes": "เริ่มการเดินทางในหอพัก",
+    "saved_at": "13/10/2026 21:57:49"
+}
