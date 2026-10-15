@@ -5,11 +5,12 @@ UI Theme and Styles for Pharmacy Afterlife Visual Novel Game
 
 import os
 import tkinter as tk
+# pyrefly: ignore [missing-import]
 from PIL import Image, ImageTk
 
-# Base Directory & Assets
+# Base Directory & Photo Assets
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+PHOTO_DIR = os.path.join(BASE_DIR, "photo")
 
 # Palette สีหลัก (ธีม Dark Modern Cyber-Clinic)
 COLOR_BG = "#0b111b"             # สีพื้นหลังหลัก
@@ -41,23 +42,27 @@ FONT_CHOICE = (FONT_FAMILY, 12, "bold")
 FONT_MONO = ("Consolas", 10)
 
 
-# Image Cache
+# -------------------------------------------------------------
+# ระบบแคชรูปภาพ (Image Cache)
+# -------------------------------------------------------------
+# เก็บภาพที่โหลดแล้วไว้ในหน่วยความจำ RAM เพื่อไม่ต้องโหลดซ้ำจากฮาร์ดดิสก์
 _image_cache = {}
 
 def get_image(filename, size=None):
     """
-    โหลดและแคชรูปภาพจากโฟลเดอร์ assets
-    - ตรวจสอบไฟล์ .png ที่มีพื้นหลังโปร่งใสเป็นอันดับแรกเสมอ
-    size: tuple (width, height)
+    โหลดและปรับขนาดรูปภาพ พร้อมระบบแคช (Image Cache):
+    - filename: ชื่อไฟล์รูปภาพ เช่น "paracetamol_tab.png"
+    - size: ขนาด (กว้าง, สูง) ที่ต้องการย่อหรือขยาย เช่น (100, 100)
     """
     if not filename:
         return None
 
+    # ตรวจสอบในแคชก่อน ถ้าเคยโหลดขนาดนี้ไว้แล้ว ให้ดึงมาใช้ได้ทันที
     key = (filename, size)
     if key in _image_cache:
         return _image_cache[key]
 
-    # ถ้าขอ .jpg แต่มี .png อยู่ (เช่น ตัวละครที่มีพื้นหลังโปร่งใส) ให้ใช้ .png แทน
+    # หากระบุไฟล์ .jpg แต่มีไฟล์ .png อยู่ ให้ลองหา .png ก่อน เพื่อได้ภาพพื้นหลังโปร่งใส
     candidate_names = [filename]
     if filename.endswith(".jpg"):
         candidate_names.insert(0, filename[:-4] + ".png")
@@ -65,23 +70,28 @@ def get_image(filename, size=None):
         candidate_names.append(filename[:-4] + ".jpg")
 
     target_path = None
-    subdirs = ["", "med_cards", "items_clean", "long_pdf", "med_items"]
+    # ค้นหาไฟล์ภาพในโฟลเดอร์ photo/ ตามหมวดย่อย 3 หมวด (med, bg, tee)
+    sub_folders = ["med", "bg", "tee", ""]
     for name in candidate_names:
-        for sub in subdirs:
-            p = os.path.join(ASSETS_DIR, sub, name) if sub else os.path.join(ASSETS_DIR, name)
+        for sub in sub_folders:
+            p = os.path.join(PHOTO_DIR, sub, name) if sub else os.path.join(PHOTO_DIR, name)
             if os.path.exists(p):
                 target_path = p
                 break
         if target_path:
             break
 
+    # ถ้าหาไฟล์รูปภาพไม่เจอ ให้คืนค่า None อย่างปลอดภัย
     if not target_path or not os.path.exists(target_path):
         return None
 
     try:
+        # เปิดไฟล์ด้วย Pillow และย่อขนาดด้วย LANCZOS เพื่อความคมชัดสูงสุด
         pil_img = Image.open(target_path)
         if size:
             pil_img = pil_img.resize(size, Image.Resampling.LANCZOS)
+        
+        # แปลงเป็น PhotoImage ของ Tkinter เพื่อใช้วาดลงบน Label หรือ Canvas
         tk_img = ImageTk.PhotoImage(pil_img)
         _image_cache[key] = tk_img
         return tk_img

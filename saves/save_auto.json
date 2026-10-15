@@ -1,7 +1,7 @@
 {
-    "player_name": "miu",
-    "score": 455,
-    "relationship": 162,
+    "player_name": "นักศึกษาหัวร้อน",
+    "score": 410,
+    "relationship": 142,
     "current_scene": "finished",
     "scene_step": 0,
     "completed_scenes": [
@@ -10,22 +10,18 @@
         "scene3"
     ],
     "inventory": [
-        "item_para",
-        "item_nss",
-        "item_carbon",
-        "item_cetirizine",
-        "item_para_syrup",
-        "item_betadine",
-        "item_cpm",
         "item_gauze_kit",
-        "item_antacid",
-        "item_burn_cream",
-        "item_counterpain",
-        "item_calamine",
+        "item_para_500",
+        "item_cetirizine",
+        "item_nss",
+        "item_cpm",
         "item_ors",
-        "item_caffeine"
+        "item_antacid",
+        "item_para",
+        "item_para_syrup",
+        "item_betadine"
     ],
-    "remaining_budget": 285,
+    "remaining_budget": 585,
     "playtime_notes": "เริ่มการเดินทางในหอพัก",
-    "saved_at": "13/10/2026 21:57:49"
+    "saved_at": "15/10/2026 19:17:56"
 }

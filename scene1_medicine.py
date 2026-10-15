@@ -10,11 +10,11 @@ from ui_theme import (
     COLOR_TEXT_MUTED, COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_GREEN,
     COLOR_GREEN_HOVER, COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW, COLOR_PURPLE, COLOR_BORDER,
     FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
-    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL,
+    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL, FONT_FAMILY,
     StyledButton, get_image
 )
 from vn_widgets import TopStatusBar, DialogueBox, show_knowledge_popup, show_save_slots_dialog, show_moph_poster_modal
-from data import CABINET_MEDICINES, MISSING_CABINET_MEDICINES, SHOP_ITEMS, MOPH_HOUSEHOLD_CATEGORIES
+from data import CABINET_MEDICINES, MISSING_CABINET_MEDICINES, SHOP_ITEMS
 from save_manager import save_game
 
 class Scene1MedicineFrame(tk.Frame):
@@ -300,7 +300,7 @@ class Scene1MedicineFrame(tk.Frame):
         card_split = tk.Frame(card, bg=COLOR_SURFACE_LIGHT)
         card_split.pack(fill="x")
 
-        # รูปภาพยาจริงที่ตัดมาจาก long.pdf
+        # รูปภาพตัวอย่างยา
         med_img_file = med.get("image", "")
         if med_img_file:
             im = get_image(med_img_file, (120, 120))
@@ -310,19 +310,29 @@ class Scene1MedicineFrame(tk.Frame):
                 lbl_pic = tk.Label(pic_box, image=im, bg=COLOR_SURFACE)
                 lbl_pic.image = im
                 lbl_pic.pack()
-                tk.Label(pic_box, text="ภาพจริง (long.pdf)", font=FONT_SMALL, fg=COLOR_YELLOW, bg=COLOR_SURFACE).pack(pady=(2, 0))
+                tk.Label(pic_box, text="ภาพตัวอย่างยา", font=FONT_SMALL, fg=COLOR_YELLOW, bg=COLOR_SURFACE).pack(pady=(2, 0))
 
         text_info = tk.Frame(card_split, bg=COLOR_SURFACE_LIGHT)
         text_info.pack(side="left", fill="both", expand=True)
 
         tk.Label(text_info, text=f"🔍 กำลังตรวจสอบ: {med['name']}", font=FONT_HEADING, fg=COLOR_ACCENT, bg=COLOR_SURFACE_LIGHT).pack(anchor="w")
-        tk.Label(text_info, text=f"• รูปแบบ: {med['type']}", font=FONT_BODY_BOLD, fg=COLOR_YELLOW, bg=COLOR_SURFACE_LIGHT).pack(anchor="w", pady=1)
+        tk.Label(text_info, text=f"• หมวดหมู่: {med['type']}", font=FONT_BODY_BOLD, fg=COLOR_YELLOW, bg=COLOR_SURFACE_LIGHT).pack(anchor="w", pady=1)
+        if med.get("classification"):
+            tk.Label(text_info, text=f"• ประเภท: {med['classification']}", font=FONT_SMALL, fg=COLOR_TEXT_MUTED, bg=COLOR_SURFACE_LIGHT).pack(anchor="w")
+        if med.get("short_effect"):
+            tk.Label(text_info, text=f"• สรรพคุณ: {med['short_effect']}", font=FONT_BODY_BOLD, fg=COLOR_GREEN, bg=COLOR_SURFACE_LIGHT).pack(anchor="w", pady=1)
+        if med.get("quantity"):
+            tk.Label(text_info, text=f"• ปริมาณที่พบ: {med['quantity']}", font=FONT_BODY, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT).pack(anchor="w", pady=1)
         tk.Label(text_info, text=f"• วันหมดอายุ: {med['expiry']}", font=FONT_BODY, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT).pack(anchor="w", pady=1)
+        if med.get("storage_condition"):
+            tk.Label(text_info, text=f"• ตำแหน่งจัดเก็บ: {med['storage_condition']}", font=FONT_BODY, fg=COLOR_YELLOW, bg=COLOR_SURFACE_LIGHT, wraplength=380, justify="left").pack(anchor="w", pady=1)
+        if med.get("packaging_condition"):
+            tk.Label(text_info, text=f"• สภาพบรรจุภัณฑ์: {med['packaging_condition']}", font=FONT_BODY, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT, wraplength=380, justify="left").pack(anchor="w", pady=1)
         tk.Label(text_info, text=f"• สภาพจริงที่มองเห็น: {med['appearance']}", font=FONT_BODY, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT, wraplength=380, justify="left").pack(anchor="w", pady=1)
 
         card_cat_file = med.get("card_image", "")
         StyledButton(
-            text_info, text="📖 เทียบเกณฑ์กับโปสเตอร์ สธ. หมวดนี้ ➔",
+            text_info, text="📖 เปิดดูคู่มือโปสเตอร์หมวดนี้ ➔",
             font=FONT_SMALL, bg=COLOR_SURFACE, fg=COLOR_ACCENT, hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
             padx=10, pady=2,
             command=lambda cid=card_cat_file: show_moph_poster_modal(self, initial_category_id=cid)
@@ -401,7 +411,7 @@ class Scene1MedicineFrame(tk.Frame):
         self.select_medicine_to_inspect(med)
 
     # -------------------------------------------------------------
-    # สรุปผลการตรวจตู้ยา & เช็คลิสต์ยาที่ขาด (ตามหลักเกณฑ์ ม.อ. หาดใหญ่)
+    # สรุปผลการตรวจตู้ยา & เช็คลิสต์ยาที่ขาด (Missing Medicine Check)
     # -------------------------------------------------------------
     def finish_cabinet_inspection(self):
         for w in self.stage_container.winfo_children():
@@ -415,11 +425,11 @@ class Scene1MedicineFrame(tk.Frame):
         header = tk.Frame(card, bg=COLOR_SURFACE, pady=6)
         header.pack(fill="x")
         tk.Label(
-            header, text="📋 สรุปผลการตรวจตู้ยา & เช็คลิสต์ยาที่ต้องซื้อเติม",
+            header, text="📋 สรุปผลการตรวจตู้ยา & ตรวจสอบยาที่ขาด (Missing Medicine Check)",
             font=FONT_TITLE, fg=COLOR_YELLOW, bg=COLOR_SURFACE
         ).pack()
         tk.Label(
-            header, text="อ้างอิง: คณะเภสัชศาสตร์ มหาวิทยาลัยสงขลานครินทร์ (PSU Pharmacy Standards)",
+            header, text="คัดแยกยาเสื่อมสภาพทิ้ง และเตรียมซื้อยาจำเป็น 7 กลุ่มให้ครบตามเกณฑ์ยาบังคับ",
             font=FONT_SMALL, fg=COLOR_TEXT_MUTED, bg=COLOR_SURFACE
         ).pack()
 
@@ -427,9 +437,9 @@ class Scene1MedicineFrame(tk.Frame):
         action_bar = tk.Frame(card, bg=COLOR_SURFACE)
         action_bar.pack(side="bottom", fill="x", padx=20, pady=(6, 12))
 
-        # ปุ่มไปร้านขายยา ซื้อของตามเช็คลิสต์ (ผู้เล่นต้องซื้อของตามภารกิจ ไม่มีปุ่มข้าม)
+        # ปุ่มไปร้านชำ ซื้อของตามเช็คลิสต์
         btn_shop = StyledButton(
-            action_bar, text="🛒 มุ่งหน้าไปร้านขายยา ซื้อของตามเช็คลิสต์ (งบ 1,000 ฿) ➔ [Enter]",
+            action_bar, text="🛒 เข้าสู่ร้านค้า: เติมสต็อกยาบังคับให้ครบ (งบ 1,000 ฿) ➔ [Enter]",
             font=FONT_BODY_BOLD, bg=COLOR_GREEN, fg=COLOR_TEXT_MAIN,
             hover_bg=COLOR_GREEN_HOVER, hover_fg=COLOR_TEXT_MAIN,
             padx=16, pady=8, command=self.start_shopping_minigame
@@ -437,9 +447,9 @@ class Scene1MedicineFrame(tk.Frame):
         btn_shop.pack(fill="x")
         btn_shop.focus_set()
 
-        # ปุ่มเปิดดูโปสเตอร์ สธ.
+        # ปุ่มเปิดดูคู่มือโปสเตอร์ยาสามัญ
         StyledButton(
-            card, text="📋 เปิดดูคู่มือทางการ สธ. (long.pdf) ➔",
+            card, text="📋 เปิดดูคู่มือโปสเตอร์ยาสามัญประจำบ้าน ➔",
             font=FONT_SMALL, bg=COLOR_SURFACE_LIGHT, fg=COLOR_ACCENT,
             hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
             padx=12, pady=3, command=lambda: show_moph_poster_modal(self)
@@ -447,7 +457,7 @@ class Scene1MedicineFrame(tk.Frame):
 
         info_bar = tk.Frame(card, bg="#1e293b", padx=12, pady=4)
         info_bar.pack(side="bottom", fill="x", padx=20, pady=(2, 4))
-        tk.Label(info_bar, text="💡 ยาสามัญประจำบ้าน 11 กลุ่มมี 'กรอบสีเขียว' | ยาใช้ภายนอกมี 'กรอบสีแดง' ห้ามรับประทาน!", font=FONT_BODY_BOLD, fg=COLOR_YELLOW, bg="#1e293b").pack()
+        tk.Label(info_bar, text="💡 ยาสามัญประจำบ้านสังเกต 'กรอบสีเขียว' | ยาใช้ภายนอกมี 'กรอบสีแดง' ห้ามรับประทาน!", font=FONT_BODY_BOLD, fg=COLOR_YELLOW, bg="#1e293b").pack()
 
         # Split into 2 columns: Expired/Spoiled vs Missing to Buy
         cols_frame = tk.Frame(card, bg=COLOR_SURFACE)
@@ -478,7 +488,7 @@ class Scene1MedicineFrame(tk.Frame):
         self.bind("<space>", lambda e: self.start_shopping_minigame())
 
     # -------------------------------------------------------------
-    # มินิเกม 2: ช้อปปิ้งบริหารเงิน 1,000 บาท (UI ปรับขนาดอัตโนมัติทั้งจอเล็กจอใหญ่)
+    # มินิเกม 2: ช้อปปิ้งร้านชำ & ตรวจสอบสต็อกยาบังคับ (งบ 1,000 บาท)
     # -------------------------------------------------------------
     def start_shopping_minigame(self):
         for w in self.stage_container.winfo_children():
@@ -492,13 +502,13 @@ class Scene1MedicineFrame(tk.Frame):
         header.pack(fill="x", pady=(0, 8))
 
         tk.Label(
-            header, text="🛒 ภารกิจที่ 2: ซื้อของเข้าหอพัก (งบ 1,000 บาท)",
+            header, text="🛒 ร้านชำจำลอง: ภารกิจเติมสต็อกยาบังคับ (งบ 1,000 บาท)",
             font=FONT_HEADING, fg=COLOR_YELLOW, bg=COLOR_SURFACE
         ).pack(side="left")
 
         # Live Checklist Tracker
         self.lbl_checklist_tracker = tk.Label(
-            header, text="📋 ยาจำเป็นในตะกร้า: 0 / 7 กลุ่ม (ยังไม่ครบ ⚠️)",
+            header, text="📋 ยาบังคับในตะกร้า: 0 / 7 กลุ่ม (ยังไม่ครบ ⚠️)",
             font=FONT_BODY_BOLD, fg=COLOR_YELLOW, bg=COLOR_SURFACE
         )
         self.lbl_checklist_tracker.pack(side="left", padx=15)
@@ -510,7 +520,7 @@ class Scene1MedicineFrame(tk.Frame):
         self.lbl_money.pack(side="right")
 
         StyledButton(
-            header, text="📋 โปสเตอร์ยาสามัญ สธ. (long.pdf)",
+            header, text="📋 คู่มือโปสเตอร์ยาสามัญ",
             font=FONT_SMALL, bg="#0284c7", fg="white",
             hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
             padx=10, pady=3, command=lambda: show_moph_poster_modal(self)
@@ -520,13 +530,13 @@ class Scene1MedicineFrame(tk.Frame):
         body = tk.Frame(self.stage_container, bg=COLOR_BG)
         body.pack(fill="both", expand=True)
 
-        # ฝั่งซ้าย: สินค้า (Scrollable Canvas แบบ Responsive เต็มพื้นที่)
+        # ฝั่งซ้าย: สินค้าบนชั้นวาง (Scrollable Canvas แบบ Responsive เต็มพื้นที่)
         left_shop = tk.Frame(body, bg=COLOR_SURFACE, bd=1, relief="solid")
         left_shop.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
         left_shop.pack(side="left", fill="both", expand=True, padx=(0, 8))
 
         tk.Label(
-            left_shop, text="รายการสินค้า (เลือกสิ่งจำเป็น 7 กลุ่มให้ครบก่อนงบหมด - ภาพจริงจาก long.pdf)",
+            left_shop, text="🛒 ชั้นวางสินค้า (เลือกยาบังคับ 7 กลุ่มให้ครบก่อนงบหมด 1,000 บาท)",
             font=FONT_BODY_BOLD, fg=COLOR_ACCENT, bg=COLOR_SURFACE, pady=6
         ).pack(fill="x")
 
@@ -556,7 +566,7 @@ class Scene1MedicineFrame(tk.Frame):
             row.pack(fill="x", pady=2)
             row.bind("<MouseWheel>", _on_shop_mousewheel)
 
-            # 1. ปุ่มหยิบใส่ตะกร้า (Pack ด้านขวาก่อน เพื่อให้อยู่ติดขอบขวาเสมอในทุกขนาดหน้าจอ)
+            # 1. ปุ่มหยิบใส่ตะกร้า (Pack ขวาสุด)
             btn = StyledButton(
                 row, text="➕ หยิบใส่",
                 font=FONT_SMALL, bg=COLOR_ACCENT, fg=COLOR_BG,
@@ -571,7 +581,7 @@ class Scene1MedicineFrame(tk.Frame):
             lbl_price = tk.Label(row, text=f"{item['price']} ฿", font=FONT_BODY_BOLD, fg=COLOR_GREEN, bg=COLOR_SURFACE_LIGHT, width=6, anchor="e")
             lbl_price.pack(side="right", padx=(2, 6))
 
-            # 3. ภาพ Thumbnail จาก long.pdf
+            # 3. ภาพ Thumbnail ไอคอนยา
             item_thumb = get_image(item.get("image", ""), (32, 32))
             if item_thumb:
                 lbl_icon = tk.Label(row, image=item_thumb, bg=COLOR_SURFACE_LIGHT)
@@ -584,34 +594,58 @@ class Scene1MedicineFrame(tk.Frame):
             lbl_cat = tk.Label(row, text=cat_tag, font=FONT_SMALL, fg=cat_col, bg=COLOR_SURFACE_LIGHT, width=12, anchor="w")
             lbl_cat.pack(side="left", padx=(0, 4))
 
-            # 5. ชื่อสินค้า
-            lbl_name = tk.Label(row, text=item["name"], font=FONT_BODY_BOLD, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT, anchor="w")
-            lbl_name.pack(side="left", fill="x", expand=True, padx=2)
+            # 5. ชื่อสินค้า + สรรพคุณสั้นๆ 1 บรรทัด
+            name_box = tk.Frame(row, bg=COLOR_SURFACE_LIGHT)
+            name_box.pack(side="left", fill="x", expand=True, padx=4)
+            name_lbl = tk.Label(name_box, text=item["name"], font=FONT_BODY_BOLD, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT, anchor="w")
+            name_lbl.pack(anchor="w")
+            name_lbl.bind("<MouseWheel>", _on_shop_mousewheel)
 
-        # ฝั่งขวา: ตะกร้าและข้อมูลสรุป (ขนาดกะทัดรัด 290px พอดีจอเล็ก)
-        right_cart = tk.Frame(body, bg=COLOR_SURFACE, width=290, bd=1, relief="solid")
+            effect_text = item.get("short_effect", item.get("desc", ""))
+            effect_lbl = tk.Label(name_box, text=f"• สรรพคุณ: {effect_text}", font=FONT_SMALL, fg=COLOR_TEXT_MUTED, bg=COLOR_SURFACE_LIGHT, anchor="w")
+            effect_lbl.pack(anchor="w")
+            effect_lbl.bind("<MouseWheel>", _on_shop_mousewheel)
+
+        # ฝั่งขวา: ระบบตรวจสอบสต็อกยาบังคับ (Missing Stock Refill Tracker)
+        right_cart = tk.Frame(body, bg=COLOR_SURFACE, width=320, bd=1, relief="solid")
         right_cart.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
         right_cart.pack(side="right", fill="both")
         right_cart.pack_propagate(False)
 
-        # ภาพร้านขายยา
-        pharm_img = get_image("bg_pharmacy.jpg", (270, 105))
-        if pharm_img:
-            lbl_pharm = tk.Label(right_cart, image=pharm_img, bg=COLOR_SURFACE)
-            lbl_pharm.image = pharm_img
-            lbl_pharm.pack(pady=(4, 2))
+        # ส่วนตรวจสอบยาบังคับที่ขาด
+        tk.Label(
+            right_cart, text="🎯 ตรวจสอบยาบังคับที่ขาด (7 กลุ่ม)",
+            font=FONT_BODY_BOLD, fg=COLOR_YELLOW, bg=COLOR_SURFACE
+        ).pack(pady=(6, 2))
 
-        preview_box = tk.Frame(right_cart, bg=COLOR_SURFACE_LIGHT, padx=6, pady=4, bd=1, relief="solid")
-        preview_box.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
-        preview_box.pack(fill="x", padx=8, pady=(2, 4))
-        tk.Label(preview_box, text="📋 ซื้อให้ครบ 7 กลุ่มจำเป็นตามหลัก สธ.\n(สังเกตสัญลักษณ์กรอบเขียวยาสามัญ)", font=FONT_SMALL, fg=COLOR_YELLOW, bg=COLOR_SURFACE_LIGHT, justify="center").pack()
+        stock_box = tk.Frame(right_cart, bg=COLOR_SURFACE_LIGHT, padx=8, pady=4, bd=1, relief="solid")
+        stock_box.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
+        stock_box.pack(fill="x", padx=8, pady=(2, 4))
+
+        self.stock_status_labels = {}
+        mandatory_categories = [
+            ("pain", "💊 ยาแก้ปวด ลดไข้", "พาราเซตามอล"),
+            ("ors", "💧 ผงเกลือแร่ ORS", "แก้ท้องเสีย"),
+            ("stomach", "🍵 ยาลดกรด/ขับลม", "ธาตุน้ำขาว / แอนตาซิล"),
+            ("allergy", "🌸 ยาแก้แพ้ ลดน้ำมูก", "เซทิริซีน / CPM"),
+            ("nss", "🧪 น้ำเกลือ 0.9% NSS", "ล้างแผลสด"),
+            ("betadine", "🩹 โพวิโดน-ไอโอดีน", "ยาใส่แผลสด"),
+            ("gauze", "🩹 ชุดทำแผล", "ผ้าก๊อซปลอดเชื้อ")
+        ]
+        for cat_key, cat_title, _ in mandatory_categories:
+            s_row = tk.Frame(stock_box, bg=COLOR_SURFACE_LIGHT)
+            s_row.pack(fill="x", pady=1)
+            tk.Label(s_row, text=f"• {cat_title}", font=FONT_SMALL, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT).pack(side="left")
+            s_badge = tk.Label(s_row, text="[ ❌ ขาด ]", font=(FONT_FAMILY, 8, "bold"), fg=COLOR_RED, bg=COLOR_SURFACE_LIGHT)
+            s_badge.pack(side="right")
+            self.stock_status_labels[cat_key] = s_badge
 
         # ตะกร้าสินค้า
-        tk.Label(right_cart, text="🧺 สินค้าในตะกร้า", font=FONT_BODY_BOLD, fg=COLOR_ACCENT, bg=COLOR_SURFACE).pack(pady=(2, 2))
+        tk.Label(right_cart, text="🧺 สินค้าในตะกร้าของคุณ", font=FONT_BODY_BOLD, fg=COLOR_ACCENT, bg=COLOR_SURFACE).pack(pady=(4, 2))
         self.cart_listbox = tk.Listbox(
             right_cart, font=FONT_SMALL, bg=COLOR_BG, fg=COLOR_TEXT_MAIN,
             selectbackground=COLOR_ACCENT, bd=0, highlightthickness=1,
-            highlightbackground=COLOR_BORDER, height=5
+            highlightbackground=COLOR_BORDER, height=4
         )
         self.cart_listbox.pack(fill="both", expand=True, padx=8, pady=2)
 
@@ -626,7 +660,7 @@ class Scene1MedicineFrame(tk.Frame):
         self.lbl_budget_status.pack(anchor="w", pady=(0, 4))
 
         self.btn_checkout = StyledButton(
-            summary_panel, text="💳 ชำระเงินและตรวจสอบของที่ซื้อ",
+            summary_panel, text="💳 ตรวจรับสินค้าและชำระเงิน ➔",
             font=FONT_BODY_BOLD, bg=COLOR_GREEN, fg=COLOR_TEXT_MAIN,
             hover_bg=COLOR_GREEN_HOVER, hover_fg=COLOR_TEXT_MAIN,
             command=self.handle_checkout
@@ -658,20 +692,28 @@ class Scene1MedicineFrame(tk.Frame):
         self.lbl_cart_total.config(text=f"รวมเป็นเงิน: {total_price} บาท")
 
         # ตรวจสอบจำนวนกลุ่มยาจำเป็นที่เลือกแล้ว (7 หมวด)
-        required_cats = {"pain", "allergy", "ors", "nss", "betadine", "burn", "gauze"}
+        required_cats = {"pain", "allergy", "ors", "stomach", "nss", "betadine", "gauze"}
         cart_items = [item for item in SHOP_ITEMS if item["id"] in self.shopping_cart]
         covered = {item.get("cat_key") for item in cart_items if item.get("cat_key")}.intersection(required_cats)
         count = len(covered)
 
+        # อัปเดตป้ายสถานะสต็อกยาแต่ละตัว (Missing Medicine Tracker)
+        if hasattr(self, "stock_status_labels"):
+            for cat_key, s_badge in self.stock_status_labels.items():
+                if cat_key in covered:
+                    s_badge.config(text="[ ✓ เติมแล้ว ]", fg=COLOR_GREEN)
+                else:
+                    s_badge.config(text="[ ❌ ขาด ]", fg=COLOR_RED)
+
         if hasattr(self, "lbl_checklist_tracker"):
             if count == len(required_cats):
                 self.lbl_checklist_tracker.config(
-                    text=f"📋 ยาจำเป็นในตะกร้า: {count} / {len(required_cats)} กลุ่ม (ครบถ้วนแล้ว ✓)",
+                    text=f"📋 ยาบังคับในตะกร้า: {count} / {len(required_cats)} กลุ่ม (ครบ 100% ✓)",
                     fg=COLOR_GREEN
                 )
             else:
                 self.lbl_checklist_tracker.config(
-                    text=f"📋 ยาจำเป็นในตะกร้า: {count} / {len(required_cats)} กลุ่ม (ยังไม่ครบ ⚠️)",
+                    text=f"📋 ยาบังคับในตะกร้า: {count} / {len(required_cats)} กลุ่ม (ยังขาด ⚠️)",
                     fg=COLOR_YELLOW
                 )
 
@@ -685,37 +727,47 @@ class Scene1MedicineFrame(tk.Frame):
             self.btn_checkout.config(state="disabled", bg=COLOR_SURFACE_LIGHT)
 
     def handle_checkout(self):
+        # 1. คำนวณยอดเงินรวมที่ใช้ซื้อสินค้าในตะกร้า
         total_spent = sum(item["price"] for item in SHOP_ITEMS if item["id"] in self.shopping_cart)
         if total_spent > self.shopping_budget:
             show_knowledge_popup(self, "เงินไม่พอ!", "การบริหารงบประมาณ", "คุณใช้เงินเกินงบ 1,000 บาท! กรุณานำของบางชิ้นออกจากตะกร้าก่อนชำระเงิน")
             return
 
-        # หมวดหมู่ยาจำเป็นที่ต้องมีอย่างน้อย 1 รายการ (7 หมวดหลัก)
+        # 2. หมวดหมู่ยาจำเป็น 7 กลุ่มหลักที่ตู้ยาหอพักต้องมีเพื่อความปลอดภัย
         required_categories = {
             "pain": "ยาแก้ปวดลดไข้ (พาราเซตามอล)",
             "allergy": "ยาแก้แพ้ลดน้ำมูก (เซทิริซีน หรือ คลอร์เฟนิรามีน)",
             "ors": "ผงเกลือแร่ ORS แก้ท้องเสีย",
+            "stomach": "ยาลดกรด / ขับลมแก้ท้องอืด (ธาตุน้ำขาว)",
             "nss": "น้ำเกลือล้างแผล 0.9% NSS",
             "betadine": "ยาใส่แผลสด (โพวิโดน-ไอโอดีน)",
-            "burn": "ครีมรักษาแผลไฟไหม้น้ำร้อนลวก (ซิลเวอร์เดิร์ม)",
             "gauze": "ชุดทำแผล/ผ้าก๊อซปลอดเชื้อ"
         }
+        
+        # 3. ตรวจสอบว่าในตะกร้ามีกลุ่มยาจำเป็นครบ 7 กลุ่มหรือไม่ (ใช้ Set Comprehension)
         cart_items = [item for item in SHOP_ITEMS if item["id"] in self.shopping_cart]
         covered_cats = {item.get("cat_key") for item in cart_items if item.get("cat_key")}
         missing_cat_keys = [k for k in required_categories if k not in covered_cats]
         missing_names = [required_categories[k] for k in missing_cat_keys]
 
+        # 4. คำนวณเงินทอนคงเหลือ (สำหรับเงื่อนไขโบนัสกิน Sushiro)
         rem_budget = self.shopping_budget - total_spent
 
-        # หากซื้อของไม่ครบตามเช็คลิสต์ -> เข้าสู่ BAD ENDING!
+        # หากซื้อของไม่ครบตาม 7 กลุ่มจำเป็น -> เข้าสู่ BAD ENDING (วิกฤตกลางดึก)
         if len(missing_cat_keys) > 0:
             self.show_bad_ending_missing_meds(missing_names, total_spent, rem_budget)
             return
 
-        # เมื่อซื้อของครบ 7 กลุ่มจำเป็น -> ได้รับคะแนนเต็มและผ่านเข้าสู่เนื้อเรื่องต่อ
-        score_gain = 50
+        # เมื่อซื้อของครบ 7 กลุ่มจำเป็น -> ได้รับคะแนนเต็มและโบนัสเติมสต็อกยาบังคับครบ 100%
+        score_gain = 80  # 50 แต้มผ่านด่าน + 30 แต้มโบนัสสต็อกครบ
         rel_gain = 15
-        summary_msg = f"ยอดเยี่ยมมาก! ซื้อของจำเป็นและยาสามัญครบถ้วนสมบูรณ์ตามหลัก สธ.! ใช้เงินไป {total_spent} ฿ เหลือเงินทอน {rem_budget} ฿"
+        has_burn_cream = "burn" in covered_cats
+        bonus_msg = ""
+        if has_burn_cream:
+            score_gain += 10
+            bonus_msg = " + ซื้อครีมแผลไฟไหม้เสริม (+10 แต้มโบนัส)"
+
+        summary_msg = f"ยอดเยี่ยมมาก! เติมสต็อกยาบังคับครบ 7 รายการสมบูรณ์แบบ (+30 แต้มโบนัส){bonus_msg}! ใช้เงินไป {total_spent} ฿ เหลือเงินทอน {rem_budget} ฿"
 
         self.game_state["score"] += score_gain
         self.game_state["relationship"] += rel_gain
@@ -746,7 +798,7 @@ class Scene1MedicineFrame(tk.Frame):
         story_text = (
             f"ในคืนต่อมา... ขณะที่กำลังทำงานดึก ทีเกิดอุบัติเหตุฉุกเฉินและมีอาการบาดเจ็บกะทันหัน!\n"
             f"{pname} รีบวิ่งไปเปิดตู้ยาเพื่อหาอุปกรณ์ปฐมพยาบาลและยาจำเป็นมารักษาเพื่อน...\n"
-            f"แต่กลับพบว่า 'ไม่มีของจำเป็นอยู่ในตู้ยาเลย!' เพราะตอนไปร้านขายยาเลือกซื้อมาไม่ครบ 7 หมวดจำเป็นตามเกณฑ์ สธ.\n"
+            f"แต่กลับพบว่า 'ไม่มีของจำเป็นอยู่ในตู้ยาเลย!' เพราะตอนไปร้านชำไม่ได้ซื้อยาจำเป็นมาเติมสต็อกให้ครบ 7 กลุ่มบังคับ\n"
             f"อาการของทีทรุดหนักลงอย่างรวดเร็ว แผลเสี่ยงติดเชื้อรุนแรงจนสุดท้ายต้องโทร 1669 หามส่งโรงพยาบาลฉุกเฉินกลางดึก!"
         )
         tk.Label(
@@ -773,7 +825,7 @@ class Scene1MedicineFrame(tk.Frame):
         # ข้อคิดความรู้ทางการแพทย์
         tk.Label(
             missing_frame,
-            text="\n💡 คำแนะนำทางการแพทย์: ยาสามัญประจำบ้าน 7 กลุ่มหลัก (แก้ปวดลดไข้, ยาแก้แพ้, ผงเกลือแร่, น้ำเกลือ NSS, เบตาดีน, ครีมรักษาแผลไฟไหม้ Silverderm, ผ้าก๊อซ) ต้องเตรียมไว้ให้พร้อมเสมอ เพราะยามฉุกเฉินกลางดึก ร้านขายยาอาจปิดทำการ!",
+            text="\n💡 คำแนะนำทางการแพทย์: ยาสามัญประจำบ้าน 7 กลุ่มหลัก (แก้ปวดลดไข้, ยาแก้แพ้, ผงเกลือแร่ ORS, ยาลดกรด/ขับลม, น้ำเกลือ NSS, เบตาดีน, ผ้าก๊อซทำแผล) ควรมีติดบ้านไว้เสมอเพื่อพร้อมรับมือยามฉุกเฉินกลางดึก! (สำหรับครีมรักษาแผลไฟไหม้ Silverderm เป็นยาเฉพาะทางทางเลือก ขั้นปฐมพยาบาลแรกที่สำคัญที่สุดคือน้ำสะอาดไหลผ่าน 15-20 นาทีและปิดด้วยผ้าสะอาด)",
             font=FONT_SMALL, fg=COLOR_ACCENT, bg=COLOR_SURFACE_LIGHT, justify="left", wraplength=720
         ).pack(anchor="w", pady=(5, 0))
 

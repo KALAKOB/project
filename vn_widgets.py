@@ -22,7 +22,9 @@ from ui_theme import (
 # -------------------------------------------------------------
 # ตัวจัดการเสียงเอฟเฟกต์ (Sound Manager)
 # -------------------------------------------------------------
-SOUND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "sounds")
+# โฟลเดอร์เก็บไฟล์เสียงประกอบเกม (เสียงพิมพ์ดีด และเสียงกดปุ่ม)
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+SOUND_DIR = os.path.join(_base_dir, "sounds")
 TYPEWRITER_SOUND = os.path.join(SOUND_DIR, "typewriter.wav")
 ADVANCE_SOUND = os.path.join(SOUND_DIR, "advance.wav")
 
@@ -752,7 +754,7 @@ def show_moph_poster_modal(parent, initial_category_id=None):
     เป็นตัวเต็มตัวเดียวสำหรับดูโปสเตอร์พร้อมแถบลัด 11 กลุ่มยา
     """
     top = tk.Toplevel(parent)
-    top.title("📋 คู่มือยาสามัญประจำบ้านทางการฉบับเต็ม (สธ. - long.pdf)")
+    top.title("📋 คู่มือโปสเตอร์ยาสามัญประจำบ้าน (11 หมวดหมู่)")
     width = 1060
     height = 700
     top.geometry(f"{width}x{height}")
@@ -783,13 +785,13 @@ def show_moph_poster_modal(parent, initial_category_id=None):
 
     tk.Label(
         title_box,
-        text="📋 คู่มือทางการ: ตัวอย่าง ยาสามัญประจำบ้าน จำหน่ายได้ในร้านชำ (ฉบับเต็ม)",
+        text="📋 คู่มือโปสเตอร์: ตัวอย่างยาสามัญประจำบ้านและวิธีสังเกตสัญลักษณ์",
         font=FONT_SUBTITLE, fg=COLOR_YELLOW, bg=COLOR_SURFACE
     ).pack(anchor="w")
 
     tk.Label(
         title_box,
-        text="กลุ่มงานคุ้มครองผู้บริโภคและเภสัชสาธารณสุข สำนักงานสาธารณสุขจังหวัด (อ้างอิงเอกสารต้นฉบับ long.pdf ใน assets)",
+        text="ตัวอย่างรายการยา สรรพคุณ และสัญลักษณ์ที่ถูกต้องสำหรับร้านชำและตู้ยาหอพัก",
         font=FONT_SMALL, fg=COLOR_TEXT_MUTED, bg=COLOR_SURFACE
     ).pack(anchor="w")
 
@@ -842,15 +844,13 @@ def show_moph_poster_modal(parent, initial_category_id=None):
 
     # Load high-resolution poster image (width ~660, height ~1640)
     poster_img = get_image("poster_display.png", (660, 1640))
-    if not poster_img:
-        poster_img = get_image("household_meds_poster.png", (660, 1640))
 
     if poster_img:
         canvas_p.create_image(370, 10, anchor="n", image=poster_img)
         canvas_p.image_ref = poster_img
         canvas_p.configure(scrollregion=(0, 0, 740, 1660))
     else:
-        canvas_p.create_text(370, 200, text="กำลังเตรียมไฟล์ภาพจาก long.pdf...", fill="white", font=FONT_HEADING)
+        canvas_p.create_text(370, 200, text="กำลังเตรียมไฟล์ภาพโปสเตอร์...", fill="white", font=FONT_HEADING)
 
     canvas_p.configure(yscrollcommand=scroll_p.set)
     canvas_p.pack(side="left", fill="both", expand=True)

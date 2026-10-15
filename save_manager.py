@@ -38,11 +38,6 @@ def save_game(game_state, slot_id="slot1"):
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=4)
         
-        # สำหรับความเข้ากันได้ย้อนหลังกับ savegame.json
-        legacy_path = os.path.join(BASE_DIR, "savegame.json")
-        with open(legacy_path, "w", encoding="utf-8") as f:
-            json.dump(state, f, ensure_ascii=False, indent=4)
-            
         return True
     except Exception as e:
         print(f"Error saving game to {slot_id}: {e}")

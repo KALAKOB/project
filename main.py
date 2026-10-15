@@ -19,7 +19,7 @@ from vn_widgets import (
     set_global_volume, get_global_volume, toggle_global_sound, is_sound_enabled, play_sfx,
     set_global_text_speed, get_global_text_speed, ADVANCE_SOUND, show_moph_poster_modal
 )
-from data import HOUSEHOLD_MEDICINES, DRUG_STORAGE_KNOWLEDGE, BURN_LEVELS, FIRST_AID_QUIZ_STEPS, MOHPROM_STEPS_INFO
+from data import DRUG_STORAGE_KNOWLEDGE
 from scene1_medicine import Scene1MedicineFrame
 from scene2_burn_firstaid import Scene2BurnFirstAidFrame
 from scene3_mohpromt import Scene3MohpromtFrame
@@ -642,7 +642,7 @@ class PharmacyAfterlifeApp:
         sec_handbook_btns.pack(fill="x", pady=4)
 
         StyledButton(
-            sec_handbook_btns, text="📋 เปิดดูคู่มือยาสามัญประจำบ้านทางการฉบับเต็ม (long.pdf) ➔", font=FONT_BODY_BOLD,
+            sec_handbook_btns, text="📋 เปิดดูคู่มือโปสเตอร์ยาสามัญประจำบ้าน ➔", font=FONT_BODY_BOLD,
             bg="#0284c7", fg=COLOR_TEXT_MAIN, hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
             padx=16, pady=6, command=lambda: show_moph_poster_modal(self.root)
         ).pack(side="left", padx=(0, 10))
@@ -706,11 +706,11 @@ class PharmacyAfterlifeApp:
         canvas.pack(fill="both", expand=True, padx=20, pady=10)
         scrollbar.pack(side="right", fill="y")
 
-        # หมวด 1: ยาสามัญ (ลิงก์ตรงไปยังตัวเต็มตัวเดียว long.pdf)
+        # หมวด 1: ยาสามัญประจำบ้าน (11 หมวดหมู่สำคัญ)
         sec1 = tk.Frame(scroll_content, bg=COLOR_SURFACE, bd=1, relief="solid", padx=15, pady=12)
         sec1.pack(fill="x", pady=6)
-        tk.Label(sec1, text="1. โปสเตอร์ทางการ: ยาสามัญประจำบ้านที่จำหน่ายได้ในร้านชำ (สธ. - long.pdf)", font=FONT_SUBTITLE, fg=COLOR_YELLOW, bg=COLOR_SURFACE).pack(anchor="w", pady=(0, 4))
-        tk.Label(sec1, text="อ้างอิงเอกสารทางการ กลุ่มงานคุ้มครองผู้บริโภคและเภสัชสาธารณสุข สำนักงานสาธารณสุข (ไฟล์ long.pdf ใน assets)", font=FONT_SMALL, fg=COLOR_TEXT_MUTED, bg=COLOR_SURFACE).pack(anchor="w", pady=(0, 8))
+        tk.Label(sec1, text="1. คู่มือยาสามัญประจำบ้าน (11 หมวดหมู่สำคัญ)", font=FONT_SUBTITLE, fg=COLOR_YELLOW, bg=COLOR_SURFACE).pack(anchor="w", pady=(0, 4))
+        tk.Label(sec1, text="โปสเตอร์แสดงตัวอย่างยาจริง สรรพคุณ และวิธีสังเกตสัญลักษณ์ยา สำหรับร้านชำและตู้ยาประจำบ้าน", font=FONT_SMALL, fg=COLOR_TEXT_MUTED, bg=COLOR_SURFACE).pack(anchor="w", pady=(0, 8))
 
         sec1_action_box = tk.Frame(sec1, bg=COLOR_SURFACE_LIGHT, padx=14, pady=12, bd=1, relief="solid")
         sec1_action_box.config(highlightbackground=COLOR_ACCENT, highlightthickness=1)
@@ -718,12 +718,12 @@ class PharmacyAfterlifeApp:
 
         tk.Label(
             sec1_action_box,
-            text="✨ เข้าดูโปสเตอร์ทางการแบบเต็ม (Full Scroll) แสดงภาพยาจริง ครบทั้ง 11 กลุ่มยา พร้อมแถบลัดไปยังกลุ่มยาต่างๆ:",
+            text="✨ เข้าดูโปสเตอร์แบบเต็ม (Full Scroll) แสดงภาพยาจริง พร้อมแถบลัดไปยังกลุ่มยาต่างๆ:",
             font=FONT_BODY_BOLD, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT
         ).pack(anchor="w", pady=(0, 6))
 
         StyledButton(
-            sec1_action_box, text="📋 เปิดดูคู่มือยาสามัญประจำบ้านทางการฉบับเต็ม (long.pdf) ➔",
+            sec1_action_box, text="📋 เปิดดูคู่มือโปสเตอร์ยาสามัญประจำบ้าน ➔",
             font=FONT_BODY_BOLD, bg="#0284c7", fg=COLOR_TEXT_MAIN,
             hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
             padx=18, pady=6, command=lambda: show_moph_poster_modal(top)
