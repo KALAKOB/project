@@ -7,14 +7,13 @@ import tkinter as tk
 from ui_theme import (
     COLOR_BG, COLOR_SURFACE, COLOR_SURFACE_LIGHT, COLOR_TEXT_MAIN,
     COLOR_TEXT_MUTED, COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_GREEN,
-    COLOR_GREEN_HOVER, COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW,
+    COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW,
     COLOR_PURPLE, COLOR_BORDER,
     FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
-    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL,
-    StyledButton, get_image
+    FONT_SMALL, StyledButton, get_image, TEE_POSE_MAP
 )
 from vn_widgets import TopStatusBar, DialogueBox, show_knowledge_popup, show_save_slots_dialog
-from data import BURN_LEVELS, FIRST_AID_QUIZ_STEPS
+from data import FIRST_AID_QUIZ_STEPS
 from save_manager import save_game
 
 class Scene2BurnFirstAidFrame(tk.Frame):
@@ -94,16 +93,9 @@ class Scene2BurnFirstAidFrame(tk.Frame):
 
         # ตัวละคร
         if char_pose != "none":
-            pose_map = {
-                "sleepy": "tee_sleepy.png",
-                "panicked": "tee_panicked.png",
-                "worried": "tee_panicked.png",
-                "happy": "tee_happy.png",
-                "angry": "tee_happy.png"
-            }
-            sprite_file = pose_map.get(char_pose, f"tee_{char_pose}.png")
+            sprite_file = TEE_POSE_MAP.get(char_pose, "tee_sleepy.png")
             sprite_h = int(h * 0.88)
-            sprite_w = int(sprite_h * (848 / 1264))
+            sprite_w = int(sprite_h * (850 / 1300))
             char_img = get_image(sprite_file, (sprite_w, sprite_h))
             if char_img:
                 self.bg_canvas.create_image(w - sprite_w - 60, h - sprite_h, anchor="nw", image=char_img)
@@ -364,8 +356,8 @@ class Scene2BurnFirstAidFrame(tk.Frame):
         pname = self.game_state["player_name"]
 
         self.post_aid_scripts = [
-            ("บรรยาย", "หลังจากผ่านการล้างน้ำสะอาดอุณหภูมิห้อง ไม่เจาะตุ่มพอง และปิดแผลหลวมๆ ด้วยผ้าก๊อซ แผลของทีได้รับการดูแลอย่างถูกต้อง...", COLOR_TEXT_MUTED, "happy"),
-            (pname, "เฮ้อออ... รอดตัวไป โชคดีนะที่แกถนัดซ้าย แต่มือที่โดนลวกเป็นมือขวา ไม่งั้นคงเขียนแบบไม่ได้แน่ๆ", "#fb923c", "happy"),
+            ("บรรยาย", "หลังจากผ่านการล้างน้ำสะอาดอุณหภูมิห้อง ไม่เจาะตุ่มพอง และปิดแผลหลวมๆ ด้วยผ้าก๊อซ แผลของทีได้รับการดูแลอย่างถูกต้อง...", COLOR_TEXT_MUTED, "bandage"),
+            (pname, "เฮ้อออ... รอดตัวไป โชคดีนะที่แกถนัดซ้าย แต่มือที่โดนลวกเป็นมือขวา ไม่งั้นคงเขียนแบบไม่ได้แน่ๆ", "#fb923c", "bandage"),
             ("บรรยาย", "ทีนั่งถอนหายใจอยู่บนเก้าอี้ ดวงตาเลื่อนลอยเหมือนวิญญาณหลุดออกจากร่าง...", COLOR_TEXT_MUTED, "sleepy"),
             (pname, "หน้าตาแบบนี้... ให้ทายนะ งานยังไม่เสร็จใช่ป่ะ?", "#fb923c", "sleepy"),
             ("ที", "ฮืออออ... ถูกเผงเลย ขึ้นโมไปแค่ครึ่งเดียวเอง แวะมาเติมกาแฟกะว่าจะโต้รุ่งแท้ๆ...", "#38bdf8", "sleepy")

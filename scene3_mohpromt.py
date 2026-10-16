@@ -10,13 +10,11 @@ from ui_theme import (
     COLOR_BG, COLOR_SURFACE, COLOR_SURFACE_LIGHT, COLOR_TEXT_MAIN,
     COLOR_TEXT_MUTED, COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_GREEN,
     COLOR_GREEN_HOVER, COLOR_RED, COLOR_YELLOW, COLOR_PURPLE, COLOR_BORDER,
-    FONT_FAMILY, FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
-    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL, FONT_MONO,
-    StyledButton, get_image
+    FONT_FAMILY, FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY_BOLD,
+    FONT_SMALL, StyledButton, get_image, TEE_POSE_MAP
 )
 from vn_widgets import TopStatusBar, DialogueBox, show_knowledge_popup, show_save_slots_dialog
 from save_manager import save_game
-from data import MOHPROM_STEPS_INFO
 
 THAI_MONTHS = [
     "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -158,16 +156,9 @@ class Scene3MohpromtFrame(tk.Frame):
 
         # ตัวละครที
         if char_pose != "none":
-            pose_map = {
-                "sleepy": "tee_sleepy.png",
-                "panicked": "tee_panicked.png",
-                "worried": "tee_panicked.png",
-                "happy": "tee_happy.png",
-                "angry": "tee_happy.png"
-            }
-            sprite_file = pose_map.get(char_pose, f"tee_{char_pose}.png")
+            sprite_file = TEE_POSE_MAP.get(char_pose, "tee_sleepy.png")
             sprite_h = int(h * 0.88)
-            sprite_w = int(sprite_h * (848 / 1264))
+            sprite_w = int(sprite_h * (850 / 1300))
             char_img = get_image(sprite_file, (sprite_w, sprite_h))
             if char_img:
                 self.bg_canvas.create_image(w - sprite_w - 60, h - sprite_h, anchor="nw", image=char_img)
@@ -595,8 +586,8 @@ class Scene3MohpromtFrame(tk.Frame):
         # Character Tee smiling happily on left side directly on canvas with clean transparency
         if w >= 880:
             char_h = min(460, int(h * 0.82))
-            char_w = int(char_h * (300 / 447))
-            char_img = get_image("tee_happy.png", (char_w, char_h))
+            char_w = int(char_h * (850 / 1300))
+            char_img = get_image("tee_surprise.png", (char_w, char_h))
             if char_img:
                 bg_canvas.create_image(30, max(20, h - char_h - 20), anchor="nw", image=char_img)
                 bg_canvas.char_img = char_img

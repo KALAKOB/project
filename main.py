@@ -3,19 +3,20 @@ Pharmacy Afterlife - Educational Visual Novel Game
 Main Entry Point with Full UI and Visual Enhancements
 """
 
+import os
 import tkinter as tk
 from tkinter import messagebox
+from PIL import Image, ImageTk
 from ui_theme import (
     COLOR_BG, COLOR_SURFACE, COLOR_SURFACE_LIGHT, COLOR_TEXT_MAIN,
     COLOR_TEXT_MUTED, COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_GREEN,
-    COLOR_GREEN_HOVER, COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW, COLOR_PURPLE, COLOR_BORDER,
+    COLOR_GREEN_HOVER, COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW, COLOR_BORDER,
     FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
-    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL,
-    StyledButton, get_image
+    FONT_SMALL, StyledButton, get_image, BASE_DIR, PHOTO_DIR
 )
 import save_manager
 from vn_widgets import (
-    show_save_slots_dialog, show_load_slots_dialog,
+    show_load_slots_dialog, center_modal,
     set_global_volume, get_global_volume, toggle_global_sound, is_sound_enabled, play_sfx,
     set_global_text_speed, get_global_text_speed, ADVANCE_SOUND, show_moph_poster_modal
 )
@@ -23,6 +24,52 @@ from data import DRUG_STORAGE_KNOWLEDGE
 from scene1_medicine import Scene1MedicineFrame
 from scene2_burn_firstaid import Scene2BurnFirstAidFrame
 from scene3_mohpromt import Scene3MohpromtFrame
+
+# ข้อมูลสมาชิกคณะผู้จัดทำโครงการ (In-Ma-Nee-Ma Team)
+MEMBERS_DATA = [
+    {
+        "id": "690813048",
+        "name": "นางสาวปรินทร คุณกิตติ",
+        "nickname": "Miu",
+        "position": "Game Logic & Scenario Developer",
+        "duty": (
+            "• เขียนและดูแลตรรกะการทำงานของเกม (Game Logic) ทั้งหมด\n"
+            "• ออกแบบและพัฒนาเงื่อนไขการเล่น สถานการณ์จำลอง และบทสนทนาภายในเกม\n"
+            "• ออกแบบมินิเกมฉากที่ 1: การตรวจสอบตู้ยาสามัญประจำบ้าน คัดแยกยาเสื่อมคุณภาพ และช้อปปิ้งงบ 1,000 บาท\n"
+            "• ออกแบบมินิเกมฉากที่ 2: แบบทดสอบสถานการณ์การปฐมพยาบาลแผลน้ำร้อนลวกตามมาตรฐาน รพ.ศิริราช\n"
+            "• ออกแบบมินิเกมฉากที่ 3: ระบบจำลองการนัดหมายแพทย์ล่วงหน้าผ่านแอปพลิเคชันหมอพร้อม"
+        ),
+        "photo_file": "690813048.png"
+    },
+    {
+        "id": "690813058",
+        "name": "นางสาวสรชา ทุกข์จาก",
+        "nickname": "In",
+        "position": "UI & Visual Novel Components",
+        "duty": (
+            "• ออกแบบและพัฒนาส่วนติดต่อผู้ใช้ (UI / UX Pro Max) สไตล์ Dark Modern Cyber-Clinic\n"
+            "• พัฒนาคอมโพเนนต์ Visual Novel: กล่องบทสนทนาพิมพ์ดีด (DialogueBox) พร้อมเสียง Typewriter\n"
+            "• พัฒนาแถบสถานะผู้เล่นด้านบน (TopStatusBar) แสดงคะแนนและเกจความสัมพันธ์แบบเรียลไทม์\n"
+            "• ออกแบบปุ่มกดและแอนิเมชันปุ่ม (StyledButton) พร้อมระบบคีย์บอร์ดลัด (Hotkeys & Escape)\n"
+            "• พัฒนาระบบหน้าต่างป๊อปอัปให้ความรู้ (Knowledge Popup) และคู่มือการใช้งานเกม (guide.txt)"
+        ),
+        "photo_file": "690813058.png"
+    },
+    {
+        "id": "690813067",
+        "name": "นางสาวยสุตมา ค่ำชู",
+        "nickname": "Khim",
+        "position": "Game Engine",
+        "duty": (
+            "• พัฒนาและดูแลโครงสร้างสถาปัตยกรรมหลักของเกม (Core Game Engine & Architecture)\n"
+            "• พัฒนาระบบบันทึกและโหลดสถานะเกมแบบหลายช่องเซฟ (Multi-slot Save/Load System)\n"
+            "• พัฒนาระบบจัดการเสียงประกอบเกม (Sound & Audio Engine) แบบ Asynchronous ผ่าน winsound\n"
+            "• ดูแลระบบแคชรูปภาพประสิทธิภาพสูง (Image Cache Engine) และการแสดงผลตัวละครโปร่งใส (Alpha Sprites)\n"
+            "• ควบคุมการเปลี่ยนผ่านฉาก (Scene Transitions) และความเสถียรของแอปพลิเคชัน"
+        ),
+        "photo_file": "690813067.png"
+    }
+]
 
 class PharmacyAfterlifeApp:
     def __init__(self, root):
@@ -46,12 +93,17 @@ class PharmacyAfterlifeApp:
         self.menu_frame = tk.Frame(self.container, bg=COLOR_BG)
         self.options_frame = tk.Frame(self.container, bg=COLOR_BG)
         self.credits_frame = tk.Frame(self.container, bg=COLOR_BG)
+        self.member_menu_frame = tk.Frame(self.container, bg=COLOR_BG)
+        self.member_detail_frame = tk.Frame(self.container, bg=COLOR_BG)
+        self.guide_frame = tk.Frame(self.container, bg=COLOR_BG)
         self.current_scene_frame = None
         self.current_page_frame = self.menu_frame
 
         self.setup_menu_page()
         self.setup_options_page()
         self.setup_credits_page()
+        self.setup_member_menu_page()
+        self.setup_guide_page()
 
         self.show_page(self.menu_frame)
 
@@ -69,9 +121,11 @@ class PharmacyAfterlifeApp:
         """
         จัดการปุ่ม Esc อย่างชาญฉลาดตามบริบทของผู้เล่น:
         1. หากมีหน้าต่าง Popup / Toplevel เปิดอยู่ -> ปิดหน้าต่างบนสุด
-        2. หากอยู่ในหน้า Options หรือ Credits -> ย้อนกลับสู่เมนูหลัก
-        3. หากกำลังเล่นอยู่ในฉากเกม -> ถามยืนยันเพื่อหยุดพักกลับสู่เมนูหลัก (พร้อม Auto-Save)
-        4. หากอยู่ที่หน้าเมนูหลักอยู่แล้ว -> ถามยืนยันออกจากโปรแกรม
+        2. หากอยู่ในหน้า User Guide -> ย้อนกลับสู่หน้า Options
+        3. หากอยู่ในหน้ารายละเอียดสมาชิก -> ย้อนกลับสู่หน้าเมนูสมาชิก
+        4. หากอยู่ในหน้า Options, Credits หรือ Member Menu -> ย้อนกลับสู่เมนูหลัก
+        5. หากกำลังเล่นอยู่ในฉากเกม -> ถามยืนยันเพื่อหยุดพักกลับสู่เมนูหลัก (พร้อม Auto-Save)
+        6. หากอยู่ที่หน้าเมนูหลักอยู่แล้ว -> ถามยืนยันออกจากโปรแกรม
         """
         # 1. ปิดหน้าต่าง Toplevel หรือ Popup ที่เปิดอยู่ด้านบนสุดก่อน
         toplevels = [w for w in self.root.winfo_children() if isinstance(w, tk.Toplevel) and w.winfo_exists()]
@@ -84,20 +138,31 @@ class PharmacyAfterlifeApp:
             top.destroy()
             return "break"
 
-        # 2. ถ้าอยู่ในหน้า Options หรือ Credits ให้ย้อนกลับสู่เมนูหลัก
         cur_frame = getattr(self, "current_page_frame", None)
-        if cur_frame in [self.options_frame, self.credits_frame]:
+
+        # 2. ถ้าอยู่ในหน้า User Guide ให้ย้อนกลับสู่หน้า Options
+        if cur_frame == self.guide_frame:
+            self.show_page(self.options_frame)
+            return "break"
+
+        # 3. ถ้าอยู่ในหน้ารายละเอียดสมาชิก ให้ย้อนกลับสู่หน้าเลือกสมาชิก
+        if cur_frame == self.member_detail_frame:
+            self.show_page(self.member_menu_frame)
+            return "break"
+
+        # 4. ถ้าอยู่ในหน้า Options, Credits หรือ Member Menu ให้ย้อนกลับสู่เมนูหลัก
+        if cur_frame in [self.options_frame, self.credits_frame, self.member_menu_frame]:
             self.show_page(self.menu_frame)
             return "break"
 
-        # 3. ถ้ากำลังเล่นฉากในเกม (Scene 1, 2, 3) ให้ถามยืนยันหยุดพักและกลับสู่เมนูหลัก (พร้อม Auto-Save)
+        # 5. ถ้ากำลังเล่นฉากในเกม (Scene 1, 2, 3) ให้ถามยืนยันหยุดพักและกลับสู่เมนูหลัก (พร้อม Auto-Save)
         if self.current_scene_frame and cur_frame == self.current_scene_frame:
             if messagebox.askyesno("กลับสู่เมนูหลัก", "คุณต้องการหยุดพักและกลับสู่หน้าเมนูหลักหรือไม่?\n(ระบบจะทำการบันทึกเกมอัตโนมัติ)"):
                 save_manager.save_game(self.game_state, "auto")
                 self.return_to_menu()
             return "break"
 
-        # 4. หากอยู่ที่หน้าเมนูหลักอยู่แล้ว ให้ถามยืนยันออกจากเกม
+        # 6. หากอยู่ที่หน้าเมนูหลักอยู่แล้ว ให้ถามยืนยันออกจากเกม
         self.confirm_exit()
         return "break"
 
@@ -219,6 +284,19 @@ class PharmacyAfterlifeApp:
         )
         self.btn_options.pack(fill="x", pady=4)
 
+        self.btn_member = StyledButton(
+            btn_box,
+            text="👥 สมาชิก (MEMBER)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE_LIGHT,
+            fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT,
+            hover_fg=COLOR_BG,
+            padx=12, pady=5,
+            command=self.open_member_menu
+        )
+        self.btn_member.pack(fill="x", pady=4)
+
         self.btn_credits = StyledButton(
             btn_box,
             text="ℹ️ เกี่ยวกับเกม (CREDITS)",
@@ -265,33 +343,41 @@ class PharmacyAfterlifeApp:
 
         self.lbl_tee_quote = tk.Label(
             speech_box,
-            text='💬 "หาววว... ขอนอนต่ออีก 5 นาทีนะแก..."',
+            text='💬 "มีชีวิตรอดถึงปีสองก็บุญแล้ว..."',
             font=FONT_BODY, fg=COLOR_ACCENT, bg=COLOR_SURFACE_LIGHT, wraplength=360, justify="center"
         )
         self.lbl_tee_quote.pack()
 
-        # รูปตัวละครโปร่งใส (คลิกเปลี่ยนอารมณ์ได้)
+        # รูปตัวละครโปร่งใสชุดใหม่ (คลิกเปลี่ยนอารมณ์ได้ 4 แบบ)
         self.tee_poses = [
-            ("tee_sleepy.png", '💬 "หาววว... ขอนอนต่ออีก 5 นาทีนะแก..."', "โหมด: สลบสไลด์"),
-            ("tee_panicked.png", '💬 "เฮ้ยยยย! น้ำร้อนลวกมือ! ช่วยด้วยยย!"', "โหมด: แตกตื่น"),
-            ("tee_happy.png", '💬 "รอดแล้วโว้ยยย! ขอบใจมากนะเพื่อนรัก!"', "โหมด: สดใสมีพลัง")
+            ("tee_sleepy.png", '💬 "โมเดลยังไม่เสร็จเลยอ่ะแก..."', "โหมด: ซึม/ง่วง"),
+            ("tee_surprise.png", '💬 "เจ๋งแจ๋วคับเพื่อน! รอดตายแล้ว!"', "โหมด: ตื่นเต้น/ดีใจ"),
+            ("tee_burn.png", '💬 "โอ๊ยยย! ร้อนๆๆ น้ำร้อนลวกมือ!"', "โหมด: โดนน้ำร้อนลวก"),
+            ("tee_bandage.png", '💬 "พันแผลเรียบร้อย ปลอดภัยหายห่วง"', "โหมด: ปฐมพยาบาลแล้ว")
         ]
         self.current_pose_idx = 0
 
-        tee_img = get_image(self.tee_poses[0][0], (220, 328))
+        tee_img = get_image(self.tee_poses[0][0], (214, 328))
         self.lbl_tee = tk.Label(right_panel, image=tee_img, bg=COLOR_SURFACE, cursor="hand2")
         self.lbl_tee.image = tee_img
         self.lbl_tee.pack(pady=2)
 
         def cycle_tee_pose(event=None):
             self.current_pose_idx = (self.current_pose_idx + 1) % len(self.tee_poses)
-            pose_file, quote, mode_name = self.tee_poses[self.current_pose_idx]
-            new_img = get_image(pose_file, (220, 328))
+            pose_data = self.tee_poses[self.current_pose_idx]
+            pose_file = pose_data[0]
+            quote = pose_data[1]
+            mode_name = pose_data[2] if len(pose_data) > 2 else ""
+
+            new_img = get_image(pose_file, (214, 328))
             if new_img:
                 self.lbl_tee.configure(image=new_img)
                 self.lbl_tee.image = new_img
             self.lbl_tee_quote.config(text=quote)
-            self.lbl_tee_hint.config(text=f"👆 คลิกเพื่อเปลี่ยนอารมณ์ ({mode_name})")
+            if mode_name:
+                self.lbl_tee_hint.config(text=f"👆 คลิกเพื่อเปลี่ยนอารมณ์ ({mode_name})")
+            else:
+                self.lbl_tee_hint.config(text="👆 คลิกเพื่อเปลี่ยนอารมณ์")
 
         self.lbl_tee.bind("<Button-1>", cycle_tee_pose)
         self.lbl_tee_quote.bind("<Button-1>", cycle_tee_pose)
@@ -305,7 +391,7 @@ class PharmacyAfterlifeApp:
         bio_box = tk.Frame(right_panel, bg=COLOR_SURFACE_LIGHT, padx=12, pady=6, highlightbackground=COLOR_BORDER, highlightthickness=1)
         bio_box.pack(fill="x", padx=18, pady=(2, 8))
         tk.Label(
-            bio_box, text="ที (Tee) | คณะสถาปัตยกรรมศาสตร์ ปี 2\nนิสัย: นอนวันละ 3 ชั่วโมง สติลอยตลอดเวลา แต่รักเพื่อนมาก",
+            bio_box, text="ที (Tee) | คณะสถาปัตยกรรมศาสตร์ ปี 2\nนิสัย: นอนวันละ 3 ชั่วโมง วันๆอยู่แต่กับโม",
             font=FONT_SMALL, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE_LIGHT, justify="center"
         ).pack()
 
@@ -315,15 +401,10 @@ class PharmacyAfterlifeApp:
     def action_new_game_prompt(self):
         top = tk.Toplevel(self.root)
         top.title("สร้างโปรไฟล์ผู้เล่นใหม่")
-        top.geometry("520x420")
         top.configure(bg=COLOR_BG)
         top.transient(self.root)
         top.grab_set()
-
-        top.update_idletasks()
-        x = self.root.winfo_rootx() + (self.root.winfo_width() // 2) - 260
-        y = self.root.winfo_rooty() + (self.root.winfo_height() // 2) - 210
-        top.geometry(f"+{x}+{y}")
+        center_modal(top, self.root, 520, 420)
 
         card = tk.Frame(top, bg=COLOR_SURFACE, bd=2, relief="solid")
         card.config(highlightbackground=COLOR_ACCENT, highlightthickness=1)
@@ -479,6 +560,34 @@ class PharmacyAfterlifeApp:
 
         canvas.pack(fill="both", expand=True, padx=30, pady=5)
         scrollbar.pack(side="right", fill="y")
+
+        # -----------------------------
+        # เมนูลัดการตั้งค่า (Options Sub-Menu): 1. User Guide, 2. Back to Main Menu
+        # -----------------------------
+        nav_card = tk.Frame(scroll_content, bg=COLOR_SURFACE, bd=2, relief="solid", padx=16, pady=12)
+        nav_card.config(highlightbackground=COLOR_ACCENT, highlightthickness=1)
+        nav_card.pack(fill="x", pady=(2, 8))
+
+        tk.Label(
+            nav_card,
+            text="📌 เมนูลัด (Options Navigation)",
+            font=FONT_HEADING,
+            fg=COLOR_YELLOW,
+            bg=COLOR_SURFACE
+        ).pack(anchor="w", pady=(0, 6))
+
+        nav_row = tk.Frame(nav_card, bg=COLOR_SURFACE)
+        nav_row.pack(fill="x")
+
+        StyledButton(
+            nav_row,
+            text="📖 คู่มือการใช้งานเกม (User Guide) ➔",
+            font=FONT_BODY_BOLD,
+            bg="#0284c7", fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=16, pady=6,
+            command=self.open_user_guide_page
+        ).pack(side="left")
 
         # -----------------------------
         # หมวด 1: ระบบเสียง (Volume & Sound Controls)
@@ -664,15 +773,10 @@ class PharmacyAfterlifeApp:
         """เปิดหน้าต่างอ่านคู่มือความรู้สุขภาพฉบับเต็ม"""
         top = tk.Toplevel(self.root)
         top.title("📖 คู่มือความรู้สุขภาพและยาสามัญประจำบ้าน")
-        top.geometry("960x650")
         top.configure(bg=COLOR_BG)
         top.transient(self.root)
         top.grab_set()
-
-        top.update_idletasks()
-        rx = self.root.winfo_rootx() + (self.root.winfo_width() // 2) - 480
-        ry = self.root.winfo_rooty() + (self.root.winfo_height() // 2) - 325
-        top.geometry(f"+{rx}+{ry}")
+        center_modal(top, self.root, 960, 650)
 
         def _close_handbook(e=None):
             try:
@@ -791,34 +895,428 @@ class PharmacyAfterlifeApp:
         top.bind("<Escape>", _close_handbook)
 
     # -------------------------------------------------------------
-    # หน้า CREDITS
+    # หน้า CREDITS (อ่านข้อมูลจาก credits.txt แบบ Scrollable)
     # -------------------------------------------------------------
     def setup_credits_page(self):
-        card = tk.Frame(self.credits_frame, bg=COLOR_SURFACE, bd=2, relief="solid")
-        card.config(highlightbackground=COLOR_ACCENT, highlightthickness=1)
-        card.place(relx=0.5, rely=0.5, anchor="center", width=700, height=480)
+        for w in self.credits_frame.winfo_children():
+            w.destroy()
 
-        tk.Label(card, text="CREDITS", font=FONT_TITLE, fg=COLOR_ACCENT, bg=COLOR_SURFACE).pack(pady=(35, 10))
+        header = tk.Frame(self.credits_frame, bg=COLOR_BG)
+        header.pack(fill="x", padx=30, pady=(15, 8))
 
-        credits_text = (
-            "🎮 โครงการ: Pharmacy Afterlife - Educational Visual Novel Game\n"
-            "📚 สาระการเรียนรู้: สุขศึกษาและการส่งเสริมสุขภาพในชีวิตประจำวัน\n\n"
-            "✨ ฟีเจอร์สำคัญในเกม:\n"
-            "• ระบบสนทนาแบบ Visual Novel ตอบสนองตามตัวเลือกของผู้เล่น\n"
-            "• มินิเกมตรวจยาเสื่อมสภาพ & วินิจฉัยยาเม็ดและยาน้ำ\n"
-            "• มินิเกมบริหารการเงิน 1,000 บาทในการซื้อยาเข้าหอพัก\n"
-            "• มินิเกมปฐมพยาบาลแผลน้ำร้อนลวกระดับสอง พร้อมระบบ Game Over\n"
-            "• ระบบจำลองสมาร์ทโฟนจองคิวนัดแพทย์ผ่านแอป 'หมอพร้อม'\n"
-            "• ระบบบันทึกเกมอัตโนมัติ (Auto-Save) และประเมินเกรดความสัมพันธ์\n\n"
-            "พัฒนาโดย Python & Tkinter GUI"
-        )
-        tk.Label(card, text=credits_text, font=FONT_BODY, fg=COLOR_TEXT_MAIN, bg=COLOR_SURFACE, justify="center").pack(pady=10)
+        top_row = tk.Frame(header, bg=COLOR_BG)
+        top_row.pack(fill="x")
+
+        tk.Label(
+            top_row,
+            text="ℹ️ เกี่ยวกับเกมและคณะผู้จัดทำ (CREDITS)",
+            font=FONT_TITLE,
+            fg=COLOR_ACCENT,
+            bg=COLOR_BG
+        ).pack(side="left")
 
         StyledButton(
-            card, text="⬅️ ย้อนกลับ", font=FONT_BODY_BOLD,
-            bg=COLOR_ACCENT, fg=COLOR_BG, hover_bg=COLOR_ACCENT_HOVER, hover_fg=COLOR_TEXT_MAIN,
+            top_row,
+            text="⬅️ กลับสู่เมนูหลัก (Back to Main Menu)",
+            font=FONT_SMALL,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=10, pady=3,
             command=lambda: self.show_page(self.menu_frame)
-        ).pack(pady=15)
+        ).pack(side="right")
+
+        tk.Label(
+            header,
+            text="ข้อมูลโครงการ วัตถุประสงค์ ประโยชน์ที่ได้รับ และรายชื่อทีมพัฒนา",
+            font=FONT_BODY,
+            fg=COLOR_TEXT_MUTED,
+            bg=COLOR_BG
+        ).pack(anchor="w")
+
+        card = tk.Frame(self.credits_frame, bg=COLOR_SURFACE, bd=2, relief="solid")
+        card.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
+        card.pack(fill="both", expand=True, padx=30, pady=(5, 12))
+
+        txt_scrollbar = tk.Scrollbar(card, orient="vertical")
+        txt = tk.Text(
+            card,
+            bg=COLOR_SURFACE,
+            fg=COLOR_TEXT_MAIN,
+            font=FONT_BODY,
+            wrap="word",
+            padx=20,
+            pady=15,
+            bd=0,
+            highlightthickness=0,
+            yscrollcommand=txt_scrollbar.set
+        )
+        txt_scrollbar.config(command=txt.yview)
+        txt_scrollbar.pack(side="right", fill="y")
+        txt.pack(side="left", fill="both", expand=True)
+
+        credits_path = os.path.join(BASE_DIR, "credits.txt")
+        credits_content = ""
+        if os.path.exists(credits_path):
+            try:
+                with open(credits_path, "r", encoding="utf-8") as f:
+                    credits_content = f.read()
+            except Exception as e:
+                credits_content = f"เกิดข้อผิดพลาดในการอ่านไฟล์ credits.txt: {e}"
+        else:
+            credits_content = (
+                "================================================================================\n"
+                "STAY ALIVE, TEE!: เมทข้าต้องรอด! (CREDITS)\n"
+                "================================================================================\n\n"
+                "[ ข้อมูลโครงการ / Project Overview ]\n"
+                "• ชื่อโปรแกรม: Stay Alive, Tee!: เมทข้าต้องรอด!\n"
+                "• ชื่อทีมพัฒนา: อินมานี่มา (In-Ma-Nee-Ma Team)\n"
+                "• หลักสูตร: วิทยาศาสตรบัณฑิต สาขาวิชาเทคโนโลยีสารสนเทศ\n\n"
+                "[ รายชื่อสมาชิกทีมพัฒนา ]\n"
+                "1. นางสาวปรินทร คุณกิตติ (รหัสนักศึกษา: 690813048) - Game Logic & Scenario Developer\n"
+                "2. นางสาวสรชา ทุกข์จาก (รหัสนักศึกษา: 690813058) - UI & Visual Novel Components\n"
+                "3. นางสาวยสุตมา ค่ำชู (รหัสนักศึกษา: 690813067) - Game Engine\n"
+            )
+
+        txt.insert("1.0", credits_content)
+        txt.config(state="disabled")
+
+        b_bar = tk.Frame(self.credits_frame, bg=COLOR_BG)
+        b_bar.pack(fill="x", padx=30, pady=(0, 10))
+
+        StyledButton(
+            b_bar,
+            text="⬅️ กลับสู่เมนูหลัก (Back to Main Menu)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_ACCENT, fg=COLOR_BG,
+            hover_bg=COLOR_ACCENT_HOVER, hover_fg=COLOR_TEXT_MAIN,
+            padx=18, pady=5,
+            command=lambda: self.show_page(self.menu_frame)
+        ).pack(side="left")
+
+    # -------------------------------------------------------------
+    # หน้า USER GUIDE (อ่านข้อมูลจาก guide.txt แบบ Scrollable)
+    # -------------------------------------------------------------
+    def open_user_guide_page(self):
+        self.setup_guide_page()
+        self.show_page(self.guide_frame)
+
+    def setup_guide_page(self):
+        for w in self.guide_frame.winfo_children():
+            w.destroy()
+
+        header = tk.Frame(self.guide_frame, bg=COLOR_BG)
+        header.pack(fill="x", padx=30, pady=(15, 8))
+
+        top_row = tk.Frame(header, bg=COLOR_BG)
+        top_row.pack(fill="x")
+
+        tk.Label(
+            top_row,
+            text="📖 คู่มือการใช้งานเกม (USER GUIDE)",
+            font=FONT_TITLE,
+            fg=COLOR_YELLOW,
+            bg=COLOR_BG
+        ).pack(side="left")
+
+        btn_row = tk.Frame(top_row, bg=COLOR_BG)
+        btn_row.pack(side="right")
+
+        StyledButton(
+            btn_row,
+            text="⬅️ กลับสู่หน้าการตั้งค่า (Back to Options)",
+            font=FONT_SMALL,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=10, pady=3,
+            command=lambda: self.show_page(self.options_frame)
+        ).pack(side="left", padx=4)
+
+        StyledButton(
+            btn_row,
+            text="🏠 เมนูหลัก (Main Menu)",
+            font=FONT_SMALL,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=10, pady=3,
+            command=lambda: self.show_page(self.menu_frame)
+        ).pack(side="left", padx=4)
+
+        tk.Label(
+            header,
+            text="คำแนะนำขั้นตอนการเล่น การควบคุมระบบบันทึก และสาระสำคัญในแต่ละฉาก",
+            font=FONT_BODY,
+            fg=COLOR_TEXT_MUTED,
+            bg=COLOR_BG
+        ).pack(anchor="w")
+
+        card = tk.Frame(self.guide_frame, bg=COLOR_SURFACE, bd=2, relief="solid")
+        card.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
+        card.pack(fill="both", expand=True, padx=30, pady=(5, 12))
+
+        txt_scrollbar = tk.Scrollbar(card, orient="vertical")
+        txt = tk.Text(
+            card,
+            bg=COLOR_SURFACE,
+            fg=COLOR_TEXT_MAIN,
+            font=FONT_BODY,
+            wrap="word",
+            padx=20,
+            pady=15,
+            bd=0,
+            highlightthickness=0,
+            yscrollcommand=txt_scrollbar.set
+        )
+        txt_scrollbar.config(command=txt.yview)
+        txt_scrollbar.pack(side="right", fill="y")
+        txt.pack(side="left", fill="both", expand=True)
+
+        guide_path = os.path.join(BASE_DIR, "guide.txt")
+        guide_content = ""
+        if os.path.exists(guide_path):
+            try:
+                with open(guide_path, "r", encoding="utf-8") as f:
+                    guide_content = f.read()
+            except Exception as e:
+                guide_content = f"เกิดข้อผิดพลาดในการอ่านไฟล์ guide.txt: {e}"
+        else:
+            guide_content = "ไม่พบไฟล์ guide.txt ในโฟลเดอร์โครงการ"
+
+        txt.insert("1.0", guide_content)
+        txt.config(state="disabled")
+
+        b_bar = tk.Frame(self.guide_frame, bg=COLOR_BG)
+        b_bar.pack(fill="x", padx=30, pady=(0, 10))
+
+        StyledButton(
+            b_bar,
+            text="⬅️ กลับสู่หน้าการตั้งค่า (Back to Options)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_ACCENT, fg=COLOR_BG,
+            hover_bg=COLOR_ACCENT_HOVER, hover_fg=COLOR_TEXT_MAIN,
+            padx=16, pady=5,
+            command=lambda: self.show_page(self.options_frame)
+        ).pack(side="left")
+
+        StyledButton(
+            b_bar,
+            text="🏠 กลับสู่เมนูหลัก (Back to Main Menu)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=16, pady=5,
+            command=lambda: self.show_page(self.menu_frame)
+        ).pack(side="right")
+
+    # -------------------------------------------------------------
+    # หน้า MEMBER MENU & MEMBER DETAIL (รายชื่อและข้อมูลสมาชิก)
+    # -------------------------------------------------------------
+    def open_member_menu(self):
+        self.setup_member_menu_page()
+        self.show_page(self.member_menu_frame)
+
+    def setup_member_menu_page(self):
+        for w in self.member_menu_frame.winfo_children():
+            w.destroy()
+
+        card = tk.Frame(self.member_menu_frame, bg=COLOR_SURFACE, bd=2, relief="solid", padx=25, pady=20)
+        card.config(highlightbackground=COLOR_ACCENT, highlightthickness=2)
+        card.place(relx=0.5, rely=0.5, anchor="center", width=580, height=450)
+
+        tk.Label(
+            card,
+            text="👥 รายชื่อสมาชิกทีมพัฒนา (MEMBERS)",
+            font=FONT_SUBTITLE,
+            fg=COLOR_YELLOW,
+            bg=COLOR_SURFACE
+        ).pack(pady=(4, 2))
+
+        tk.Label(
+            card,
+            text="ทีม: อินมานี่มา (In-Ma-Nee-Ma) | สาขาวิชาเทคโนโลยีสารสนเทศ",
+            font=FONT_SMALL,
+            fg=COLOR_TEXT_MUTED,
+            bg=COLOR_SURFACE,
+            justify="center"
+        ).pack(pady=(0, 14))
+
+        btn_box = tk.Frame(card, bg=COLOR_SURFACE)
+        btn_box.pack(fill="x", padx=15)
+
+        # 1. 690813048 นางสาวปรินทร คุณกิตติ
+        StyledButton(
+            btn_box,
+            text="1. 690813048 นางสาวปรินทร คุณกิตติ  ➔",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=14, pady=7, anchor="w",
+            command=lambda: self.show_member_detail("690813048")
+        ).pack(fill="x", pady=4)
+
+        # 2. 690813058 นางสาวสรชา ทุกข์จาก
+        StyledButton(
+            btn_box,
+            text="2. 690813058 นางสาวสรชา ทุกข์จาก  ➔",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=14, pady=7, anchor="w",
+            command=lambda: self.show_member_detail("690813058")
+        ).pack(fill="x", pady=4)
+
+        # 3. 690813067 นางสาวยสุตมา ค่ำชู
+        StyledButton(
+            btn_box,
+            text="3. 690813067 นางสาวยสุตมา ค่ำชู  ➔",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=14, pady=7, anchor="w",
+            command=lambda: self.show_member_detail("690813067")
+        ).pack(fill="x", pady=4)
+
+        # 4. Back to Main Menu
+        StyledButton(
+            btn_box,
+            text="⬅️ 4. กลับสู่เมนูหลัก (Back to Main Menu)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE, fg=COLOR_RED,
+            hover_bg=COLOR_RED_HOVER, hover_fg=COLOR_TEXT_MAIN,
+            padx=14, pady=7, anchor="center",
+            command=lambda: self.show_page(self.menu_frame)
+        ).pack(fill="x", pady=(12, 4))
+
+    def show_member_detail(self, member_id):
+        for w in self.member_detail_frame.winfo_children():
+            w.destroy()
+
+        member = next((m for m in MEMBERS_DATA if m["id"] == member_id), None)
+        if not member:
+            self.show_page(self.member_menu_frame)
+            return
+
+        card = tk.Frame(self.member_detail_frame, bg=COLOR_SURFACE, bd=2, relief="solid", padx=22, pady=16)
+        card.config(highlightbackground=COLOR_ACCENT, highlightthickness=2)
+        card.place(relx=0.5, rely=0.5, anchor="center", width=840, height=530)
+
+        # Top Title Bar
+        title_bar = tk.Frame(card, bg=COLOR_SURFACE)
+        title_bar.pack(fill="x", pady=(0, 10))
+
+        tk.Label(
+            title_bar,
+            text=f"👤 ข้อมูลผู้จัดทำ: {member['name']}",
+            font=FONT_SUBTITLE,
+            fg=COLOR_YELLOW,
+            bg=COLOR_SURFACE
+        ).pack(side="left")
+
+        # Main Body: 2 Columns (Left: Photo, Right: Info)
+        body = tk.Frame(card, bg=COLOR_SURFACE)
+        body.pack(fill="both", expand=True)
+
+        # Left Column: Photo Frame with aspect ratio preservation
+        left_col = tk.Frame(body, bg=COLOR_SURFACE_LIGHT, bd=1, relief="solid", padx=8, pady=8, width=240)
+        left_col.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
+        left_col.pack(side="left", fill="y", padx=(0, 18))
+        left_col.pack_propagate(False)
+
+        photo_canvas = tk.Canvas(left_col, bg=COLOR_BG, highlightthickness=0, width=220, height=290)
+        photo_canvas.pack(pady=6)
+
+        # Aspect-ratio preserved image loading with error handling
+        photo_img = None
+        photo_file = member.get("photo_file", "")
+        photo_path = os.path.join(PHOTO_DIR, "member", photo_file)
+        if not os.path.exists(photo_path):
+            photo_path = os.path.join(PHOTO_DIR, photo_file)
+
+        if os.path.exists(photo_path):
+            try:
+                pil_im = Image.open(photo_path)
+                orig_w, orig_h = pil_im.size
+                max_w, max_h = 210, 280
+                scale = min(max_w / orig_w, max_h / orig_h)
+                new_w = max(1, int(orig_w * scale))
+                new_h = max(1, int(orig_h * scale))
+                pil_resized = pil_im.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                photo_img = ImageTk.PhotoImage(pil_resized)
+            except Exception as e:
+                print(f"Error loading member photo {photo_file}: {e}")
+
+        if photo_img:
+            photo_canvas.create_image(110, 145, image=photo_img, anchor="center")
+            photo_canvas.image = photo_img
+        else:
+            photo_canvas.create_text(
+                110, 145,
+                text="[ ไม่พบรูปภาพ ]\n(Missing Photo)",
+                fill=COLOR_TEXT_MUTED,
+                font=FONT_BODY_BOLD,
+                justify="center"
+            )
+
+        # Right Column: Member Details
+        right_col = tk.Frame(body, bg=COLOR_SURFACE)
+        right_col.pack(side="left", fill="both", expand=True)
+
+        def make_field(parent, label_text, val_text, val_color=COLOR_TEXT_MAIN, is_multiline=False):
+            f = tk.Frame(parent, bg=COLOR_SURFACE)
+            f.pack(fill="x", pady=2)
+            tk.Label(f, text=label_text, font=FONT_BODY_BOLD, fg=COLOR_ACCENT, bg=COLOR_SURFACE, width=14, anchor="w").pack(side="left", anchor="nw")
+            if is_multiline:
+                tk.Label(f, text=val_text, font=FONT_BODY, fg=val_color, bg=COLOR_SURFACE, justify="left", wraplength=450).pack(side="left", fill="x", expand=True, anchor="w")
+            else:
+                tk.Label(f, text=val_text, font=FONT_BODY, fg=val_color, bg=COLOR_SURFACE, anchor="w").pack(side="left", fill="x", expand=True)
+
+        make_field(right_col, "รหัสนักศึกษา:", member["id"], COLOR_YELLOW)
+        make_field(right_col, "ชื่อ-นามสกุล:", member["name"], COLOR_TEXT_MAIN)
+        make_field(right_col, "ชื่อเล่น:", member["nickname"], COLOR_TEXT_MUTED)
+        make_field(right_col, "ตำแหน่ง:", member["position"], COLOR_GREEN)
+
+        tk.Frame(right_col, height=1, bg=COLOR_BORDER).pack(fill="x", pady=6)
+
+        tk.Label(right_col, text="หน้าที่ความรับผิดชอบ:", font=FONT_BODY_BOLD, fg=COLOR_ACCENT, bg=COLOR_SURFACE).pack(anchor="w", pady=(0, 4))
+        
+        duty_box = tk.Frame(right_col, bg=COLOR_SURFACE_LIGHT, padx=12, pady=8, bd=1, relief="solid")
+        duty_box.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
+        duty_box.pack(fill="both", expand=True)
+
+        tk.Label(
+            duty_box,
+            text=member["duty"],
+            font=FONT_BODY,
+            fg=COLOR_TEXT_MAIN,
+            bg=COLOR_SURFACE_LIGHT,
+            justify="left",
+            wraplength=460
+        ).pack(anchor="nw", fill="both")
+
+        # Bottom Button Bar: Direct link to Main Menu & Back to Member List
+        btn_bar = tk.Frame(card, bg=COLOR_SURFACE)
+        btn_bar.pack(fill="x", pady=(12, 0))
+
+        StyledButton(
+            btn_bar,
+            text="⬅️ กลับสู่หน้ารายชื่อสมาชิก (Back to Members)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_SURFACE_LIGHT, fg=COLOR_TEXT_MAIN,
+            hover_bg=COLOR_ACCENT, hover_fg=COLOR_BG,
+            padx=14, pady=5,
+            command=lambda: self.show_page(self.member_menu_frame)
+        ).pack(side="left")
+
+        StyledButton(
+            btn_bar,
+            text="🏠 กลับสู่เมนูหลัก (Back to Main Menu)",
+            font=FONT_BODY_BOLD,
+            bg=COLOR_ACCENT, fg=COLOR_BG,
+            hover_bg=COLOR_ACCENT_HOVER, hover_fg=COLOR_TEXT_MAIN,
+            padx=16, pady=5,
+            command=lambda: self.show_page(self.menu_frame)
+        ).pack(side="right")
+
+        self.show_page(self.member_detail_frame)
 
 
 def main():

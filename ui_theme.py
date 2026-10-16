@@ -41,6 +41,19 @@ FONT_SPEAKER = (FONT_FAMILY, 14, "bold")
 FONT_CHOICE = (FONT_FAMILY, 12, "bold")
 FONT_MONO = ("Consolas", 10)
 
+# แผนผังภาพตัวละครที (Tee Character Sprite Pose Map)
+TEE_POSE_MAP = {
+    "sleepy": "tee_sleepy.png",
+    "surprise": "tee_surprise.png",
+    "happy": "tee_surprise.png",
+    "talk": "tee_surprise.png",
+    "angry": "tee_surprise.png",
+    "panicked": "tee_burn.png",
+    "worried": "tee_sleepy.png",
+    "burn": "tee_burn.png",
+    "bandage": "tee_bandage.png"
+}
+
 
 # -------------------------------------------------------------
 # ระบบแคชรูปภาพ (Image Cache)
@@ -70,14 +83,18 @@ def get_image(filename, size=None):
         candidate_names.append(filename[:-4] + ".jpg")
 
     target_path = None
-    # ค้นหาไฟล์ภาพในโฟลเดอร์ photo/ ตามหมวดย่อย 3 หมวด (med, bg, tee)
-    sub_folders = ["med", "bg", "tee", ""]
+    # ค้นหาไฟล์ภาพในโฟลเดอร์ photo/ ตามหมวดย่อย (med, bg, tee, member) และโฟลเดอร์ assets/
+    sub_folders = ["med", "bg", "tee", "member", ""]
     for name in candidate_names:
         for sub in sub_folders:
             p = os.path.join(PHOTO_DIR, sub, name) if sub else os.path.join(PHOTO_DIR, name)
             if os.path.exists(p):
                 target_path = p
                 break
+        if not target_path:
+            alt_assets = os.path.join(BASE_DIR, "assets", "members", name)
+            if os.path.exists(alt_assets):
+                target_path = alt_assets
         if target_path:
             break
 

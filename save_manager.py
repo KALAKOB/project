@@ -47,12 +47,7 @@ def load_game(slot_id="slot1"):
     """โหลดข้อมูลจากไฟล์เซฟสล็อตที่กำหนด"""
     filepath = get_slot_path(slot_id)
     if not os.path.exists(filepath):
-        # ถ้าไม่มีในโฟลเดอร์ saves ลองหา legacy savegame.json
-        legacy_path = os.path.join(BASE_DIR, "savegame.json")
-        if slot_id == "slot1" and os.path.exists(legacy_path):
-            filepath = legacy_path
-        else:
-            return None
+        return None
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -66,13 +61,8 @@ def load_game(slot_id="slot1"):
 def has_save(slot_id=None):
     """ตรวจสอบว่ามีไฟล์เซฟอยู่หรือไม่ (ถ้าไม่ระบุ slot_id ให้ตรวจว่ามีเซฟใดๆ หรือไม่)"""
     if slot_id:
-        return os.path.exists(get_slot_path(slot_id)) or (slot_id == "slot1" and os.path.exists(os.path.join(BASE_DIR, "savegame.json")))
-    
-    # ตรวจสอบทุกสล็อต
-    for s in ["slot1", "slot2", "slot3", "auto"]:
-        if os.path.exists(get_slot_path(s)):
-            return True
-    return os.path.exists(os.path.join(BASE_DIR, "savegame.json"))
+        return os.path.exists(get_slot_path(slot_id))
+    return any(os.path.exists(get_slot_path(s)) for s in ["slot1", "slot2", "slot3", "auto"])
 
 def get_all_slots_info():
     """ส่งคืนรายการข้อมูลสรุปของทุกช่องเซฟเพื่อใช้แสดงในหน้าต่าง Save/Load UI"""
@@ -82,59 +72,36 @@ def get_all_slots_info():
         ("slot3", "ช่องเซฟที่ 3 (Slot 3)"),
         ("auto", "เซฟอัตโนมัติ (Auto-Save)")
     ]
-    results = []
     scene_titles = {
         "scene1": "ฉากที่ 1: ตู้ยาสามัญ & ห้างสรรพสินค้า",
         "scene2": "ฉากที่ 2: วิกฤตน้ำร้อนลวกในห้องครัว",
         "scene3": "ฉากที่ 3: ร้านราเมน & แอปหมอพร้อม",
         "finished": "🎓 จบเกมสมบูรณ์"
     }
-
+    results = []
     for slot_id, slot_name in slots:
         data = load_game(slot_id)
-        if data:
-            sc_code = data.get("current_scene", "scene1")
-            results.append({
-                "slot_id": slot_id,
-                "slot_name": slot_name,
-                "is_empty": False,
-                "player_name": data.get("player_name", "นักศึกษา"),
-                "scene_title": scene_titles.get(sc_code, sc_code),
-                "score": data.get("score", 0),
-                "relationship": data.get("relationship", 50),
-                "saved_at": data.get("saved_at", "ไม่ระบุเวลา"),
-                "data": data
-            })
-        else:
-            results.append({
-                "slot_id": slot_id,
-                "slot_name": slot_name,
-                "is_empty": True,
-                "player_name": "-",
-                "scene_title": "ว่าง (ไม่มีข้อมูล)",
-                "score": 0,
-                "relationship": 0,
-                "saved_at": "-",
-                "data": None
-            })
+        sc_code = data.get("current_scene", "scene1") if data else ""
+        results.append({
+            "slot_id": slot_id,
+            "slot_name": slot_name,
+            "is_empty": data is None,
+            "player_name": data.get("player_name", "นักศึกษา") if data else "-",
+            "scene_title": scene_titles.get(sc_code, sc_code) if data else "ว่าง (ไม่มีข้อมูล)",
+            "score": data.get("score", 0) if data else 0,
+            "relationship": data.get("relationship", 50) if data else 0,
+            "saved_at": data.get("saved_at", "ไม่ระบุเวลา") if data else "-",
+            "data": data
+        })
     return results
 
 def delete_save(slot_id="slot1"):
     """ลบไฟล์เซฟในสล็อตที่กำหนด"""
     filepath = get_slot_path(slot_id)
-    success = False
     if os.path.exists(filepath):
         try:
             os.remove(filepath)
-            success = True
+            return True
         except Exception:
             pass
-    if slot_id == "slot1":
-        legacy_path = os.path.join(BASE_DIR, "savegame.json")
-        if os.path.exists(legacy_path):
-            try:
-                os.remove(legacy_path)
-                success = True
-            except Exception:
-                pass
-    return success
+    return False

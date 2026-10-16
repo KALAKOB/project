@@ -7,15 +7,15 @@ Visual Novel UI Widgets for Tkinter
 
 import os
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 import winsound
 import save_manager
 from ui_theme import (
     COLOR_BG, COLOR_SURFACE, COLOR_SURFACE_LIGHT, COLOR_TEXT_MAIN,
     COLOR_TEXT_MUTED, COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_GREEN,
     COLOR_GREEN_HOVER, COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW, COLOR_PURPLE, COLOR_BORDER,
-    FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
-    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL, FONT_MONO,
+    FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
+    FONT_DIALOGUE, FONT_SPEAKER, FONT_SMALL,
     StyledButton, get_image
 )
 
@@ -83,6 +83,16 @@ def play_sfx(sound_path):
             winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
     except Exception:
         pass
+
+
+def center_modal(top, parent, width, height):
+    """จัดตำแหน่งหน้าต่าง Modal ให้อยู่กึ่งกลางหน้าต่างหลัก"""
+    top.geometry(f"{width}x{height}")
+    top.update_idletasks()
+    pw = parent.winfo_toplevel()
+    rx = pw.winfo_rootx() + (pw.winfo_width() // 2) - (width // 2)
+    ry = pw.winfo_rooty() + (pw.winfo_height() // 2) - (height // 2)
+    top.geometry(f"+{rx}+{ry}")
 
 
 class TopStatusBar(tk.Frame):
@@ -412,15 +422,10 @@ class DialogueBox(tk.Frame):
         """เปิดหน้าต่างแสดงประวัติบทสนทนาย้อนหลัง (Backlog Modal)"""
         top = tk.Toplevel(self)
         top.title("📜 ประวัติบทสนทนาย้อนหลัง (Dialogue History)")
-        top.geometry("740x540")
         top.configure(bg=COLOR_BG)
         top.transient(self.winfo_toplevel())
         top.grab_set()
-
-        top.update_idletasks()
-        rx = self.winfo_toplevel().winfo_rootx() + (self.winfo_toplevel().winfo_width() // 2) - 370
-        ry = self.winfo_toplevel().winfo_rooty() + (self.winfo_toplevel().winfo_height() // 2) - 270
-        top.geometry(f"+{rx}+{ry}")
+        center_modal(top, self, 740, 540)
 
         header = tk.Frame(top, bg=COLOR_SURFACE, pady=10, padx=16, bd=1, relief="solid")
         header.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
@@ -493,15 +498,10 @@ def show_save_slots_dialog(parent, current_game_state, on_saved=None):
     """เปิดหน้าต่างเลือกช่องเพื่อบันทึกเกม (Save Slots Modal)"""
     top = tk.Toplevel(parent)
     top.title("💾 บันทึกเกม - เลือกช่องเซฟ")
-    top.geometry("640x520")
     top.configure(bg=COLOR_BG)
     top.transient(parent.winfo_toplevel())
     top.grab_set()
-
-    top.update_idletasks()
-    rx = parent.winfo_toplevel().winfo_rootx() + (parent.winfo_toplevel().winfo_width() // 2) - 320
-    ry = parent.winfo_toplevel().winfo_rooty() + (parent.winfo_toplevel().winfo_height() // 2) - 260
-    top.geometry(f"+{rx}+{ry}")
+    center_modal(top, parent, 640, 520)
 
     header = tk.Frame(top, bg=COLOR_SURFACE, pady=10, padx=16, bd=1, relief="solid")
     header.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
@@ -577,15 +577,10 @@ def show_load_slots_dialog(parent, on_loaded=None):
     """เปิดหน้าต่างเลือกช่องเพื่อโหลดเกม (Load Slots Modal)"""
     top = tk.Toplevel(parent)
     top.title("📁 โหลดเซฟ - เลือกช่องที่ต้องการเล่นต่อ")
-    top.geometry("660x560")
     top.configure(bg=COLOR_BG)
     top.transient(parent.winfo_toplevel())
     top.grab_set()
-
-    top.update_idletasks()
-    rx = parent.winfo_toplevel().winfo_rootx() + (parent.winfo_toplevel().winfo_width() // 2) - 330
-    ry = parent.winfo_toplevel().winfo_rooty() + (parent.winfo_toplevel().winfo_height() // 2) - 280
-    top.geometry(f"+{rx}+{ry}")
+    center_modal(top, parent, 660, 560)
 
     header = tk.Frame(top, bg=COLOR_SURFACE, pady=10, padx=16, bd=1, relief="solid")
     header.config(highlightbackground=COLOR_BORDER, highlightthickness=1)
@@ -680,15 +675,10 @@ def show_knowledge_popup(parent, title, category, message, button_text="เข�
     top.title(title)
     width = 720 if image_name else 620
     height = 540 if image_name else 460
-    top.geometry(f"{width}x{height}")
     top.configure(bg=COLOR_BG)
     top.transient(parent.winfo_toplevel())
     top.grab_set()
-
-    top.update_idletasks()
-    x = parent.winfo_toplevel().winfo_rootx() + (parent.winfo_toplevel().winfo_width() // 2) - (width // 2)
-    y = parent.winfo_toplevel().winfo_rooty() + (parent.winfo_toplevel().winfo_height() // 2) - (height // 2)
-    top.geometry(f"+{x}+{y}")
+    center_modal(top, parent, width, height)
 
     card = tk.Frame(top, bg=COLOR_SURFACE, bd=2, relief="solid")
     card.config(highlightbackground=COLOR_ACCENT, highlightthickness=1)
@@ -755,17 +745,10 @@ def show_moph_poster_modal(parent, initial_category_id=None):
     """
     top = tk.Toplevel(parent)
     top.title("📋 คู่มือโปสเตอร์ยาสามัญประจำบ้าน (11 หมวดหมู่)")
-    width = 1060
-    height = 700
-    top.geometry(f"{width}x{height}")
     top.configure(bg=COLOR_BG)
     top.transient(parent.winfo_toplevel())
     top.grab_set()
-
-    top.update_idletasks()
-    x = parent.winfo_toplevel().winfo_rootx() + (parent.winfo_toplevel().winfo_width() // 2) - (width // 2)
-    y = parent.winfo_toplevel().winfo_rooty() + (parent.winfo_toplevel().winfo_height() // 2) - (height // 2)
-    top.geometry(f"+{x}+{y}")
+    center_modal(top, parent, 1060, 700)
 
     def _close_poster(event=None):
         try:

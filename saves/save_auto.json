@@ -10,18 +10,18 @@
         "scene3"
     ],
     "inventory": [
-        "item_gauze_kit",
-        "item_para_500",
-        "item_cetirizine",
-        "item_nss",
-        "item_cpm",
-        "item_ors",
         "item_antacid",
         "item_para",
+        "item_ors",
+        "item_betadine",
         "item_para_syrup",
-        "item_betadine"
+        "item_gauze_kit",
+        "item_cetirizine",
+        "item_cpm",
+        "item_para_500",
+        "item_nss"
     ],
     "remaining_budget": 585,
     "playtime_notes": "เริ่มการเดินทางในหอพัก",
-    "saved_at": "15/10/2026 19:17:56"
+    "saved_at": "16/10/2026 00:24:15"
 }

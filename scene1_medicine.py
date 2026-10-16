@@ -4,14 +4,12 @@ Scene 1: First Aid Household Medicines & Quality Check
 """
 
 import tkinter as tk
-from tkinter import ttk
 from ui_theme import (
     COLOR_BG, COLOR_SURFACE, COLOR_SURFACE_LIGHT, COLOR_TEXT_MAIN,
     COLOR_TEXT_MUTED, COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_GREEN,
     COLOR_GREEN_HOVER, COLOR_RED, COLOR_RED_HOVER, COLOR_YELLOW, COLOR_PURPLE, COLOR_BORDER,
     FONT_TITLE, FONT_SUBTITLE, FONT_HEADING, FONT_BODY, FONT_BODY_BOLD,
-    FONT_DIALOGUE, FONT_SPEAKER, FONT_CHOICE, FONT_SMALL, FONT_FAMILY,
-    StyledButton, get_image
+    FONT_SMALL, FONT_FAMILY, StyledButton, get_image, TEE_POSE_MAP
 )
 from vn_widgets import TopStatusBar, DialogueBox, show_knowledge_popup, show_save_slots_dialog, show_moph_poster_modal
 from data import CABINET_MEDICINES, MISSING_CABINET_MEDICINES, SHOP_ITEMS
@@ -113,18 +111,10 @@ class Scene1MedicineFrame(tk.Frame):
 
         # ตัวละคร
         if char_pose != "none":
-            pose_map = {
-                "sleepy": "tee_sleepy.png",
-                "panicked": "tee_panicked.png",
-                "worried": "tee_panicked.png",
-                "happy": "tee_happy.png",
-                "angry": "tee_happy.png",
-                "talk": "tee_happy.png"
-            }
-            sprite_file = pose_map.get(char_pose, f"tee_{char_pose}.png")
-            # ความสูงตัวละครประมาณ 88% ของความสูง canvas พร้อมรักษาสัดส่วนแท้จริง (848x1264)
+            sprite_file = TEE_POSE_MAP.get(char_pose, "tee_sleepy.png")
+            # ความสูงตัวละครประมาณ 88% ของความสูง canvas พร้อมรักษาสัดส่วนแท้จริง (850x1300)
             sprite_h = int(h * 0.88)
-            sprite_w = int(sprite_h * (848 / 1264))
+            sprite_w = int(sprite_h * (850 / 1300))
             char_img = get_image(sprite_file, (sprite_w, sprite_h))
             if char_img:
                 # วาดตัวละครด้านขวา บนพื้นหลังอย่างกลมกลืนแบบไม่มีขอบขาว

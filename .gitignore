@@ -7,3 +7,5 @@ env/
 .idea/
 .vscode/
 .agent/
+_backup_clean/
+scripts/
