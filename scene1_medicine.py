@@ -876,7 +876,7 @@ class Scene1MedicineFrame(tk.Frame):
             self.storage_scripts.append((pname, f"แต่ดูเงินทอนสิ... เหลือแค่ {rem} บาทเอง เดือนนี้อดกินแล้วสินะ Sushiro ของโปรดเรา... T_T ซื้อของเพลินไปหน่อย เงินไม่พอกินซูชิสายพานแล้ว...", "#fb923c", "dorm", "sleepy"))
             self.storage_scripts.append(("ที", "ฮือออ ไม่เป็นไรน่าเพื่อน... ไว้งวดหน้าค่อยไปกินใหม่ อย่างน้อยตอนนี้เราก็มียาตุนไว้รอดตายแล้วนะ!", "#38bdf8", "dorm", "happy"))
         else:
-            self.storage_scripts.append((pname, f"แถมดูเงินทอนสิ! มีเงินเหลือตั้ง {rem} บาท (เกิน 200 บาท) บริหารเงินขั้นเทพ!", "#fb923c", "dorm", "happy"))
+            self.storage_scripts.append((pname, f"แถมดูเงินทอนสิ! มีเงินเหลือตั้ง {rem} บาท ", "#fb923c", "dorm", "happy"))
             self.storage_scripts.append(("ที", f"เย้! เย็นนี้เราสองคนแวะไปฉลอง Sushiro ของโปรดกันได้แล้วเพื่อนรัก! รอดตายแถมได้กินซูชิฟินๆ!", "#38bdf8", "dorm", "happy"))
 
         self.storage_scripts.extend([

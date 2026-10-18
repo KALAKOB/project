@@ -29,7 +29,7 @@ TYPEWRITER_SOUND = os.path.join(SOUND_DIR, "typewriter.wav")
 ADVANCE_SOUND = os.path.join(SOUND_DIR, "advance.wav")
 
 _sound_enabled = True
-_global_text_speed_ms = 18
+_global_text_speed_ms = 24
 
 def set_global_text_speed(speed_ms):
     global _global_text_speed_ms
@@ -69,6 +69,7 @@ def toggle_global_sound():
         set_global_volume(80)
     elif not _sound_enabled:
         set_global_volume(0)
+        stop_typewriter_loop()
     return _sound_enabled
 
 def is_sound_enabled():
@@ -80,7 +81,27 @@ def play_sfx(sound_path):
         return
     try:
         if os.path.exists(sound_path):
-            winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
+    except Exception:
+        pass
+
+def start_typewriter_loop():
+    """เริ่มเล่นเสียงพิมพ์ดีดวนลูปต่อเนื่องตลอดเวลาที่ตัวหนังสือกำลังพิมพ์"""
+    if not _sound_enabled:
+        return
+    try:
+        if os.path.exists(TYPEWRITER_SOUND):
+            winsound.PlaySound(
+                TYPEWRITER_SOUND,
+                winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP | winsound.SND_NODEFAULT
+            )
+    except Exception:
+        pass
+
+def stop_typewriter_loop():
+    """หยุดเสียงพิมพ์ดีดทันที"""
+    try:
+        winsound.PlaySound(None, 0)
     except Exception:
         pass
 
@@ -317,35 +338,39 @@ class DialogueBox(tk.Frame):
         """
         if self._is_typing:
             self._skip_to_full_text()
+            play_sfx(ADVANCE_SOUND)
         else:
             play_sfx(ADVANCE_SOUND)
             if self.on_next:
                 self.on_next()
 
     def _skip_to_full_text(self):
-        """เร่งข้อความให้ปรากฏครบทั้งประโยคทันที"""
+        """เร่งข้อความให้ปรากฏครบทั้งประโยคทันที และตัดหยุดเสียงพิมพ์ดีด"""
         if self._type_after_id:
             self.after_cancel(self._type_after_id)
             self._type_after_id = None
         self._is_typing = False
+        stop_typewriter_loop()
         self.lbl_text.config(text=self._full_text)
         self.lbl_indicator.config(fg=COLOR_ACCENT)
 
+    def _start_typing(self):
+        """เริ่มเปิดเสียงพิมพ์ดีดวนลูปต่อเนื่อง และเริ่มสตรีมตัวอักษร"""
+        if not self._is_typing:
+            return
+        start_typewriter_loop()
+        self._type_step()
+
     def _type_step(self):
-        """ขั้นตอน Typewriter สตรีมตัวอักษรทีละตัวพร้อมเสียงพิมพ์ดีด"""
+        """ขั้นตอน Typewriter สตรีมตัวอักษรทีละตัวบนหน้าจอ โดยเสียงวนลูปคลอยาวอัตโนมัติ"""
         self._type_speed_ms = _global_text_speed_ms
         if self._char_index < len(self._full_text):
             self._char_index += 1
             self.lbl_text.config(text=self._full_text[:self._char_index])
-            
-            # เล่นเสียงพิมพ์ดีดทุกๆ 2 ตัวอักษร (ยกเว้นเว้นวรรค)
-            cur_char = self._full_text[self._char_index - 1]
-            if self._char_index % 2 == 0 and cur_char not in (" ", "\n", "\t"):
-                play_sfx(TYPEWRITER_SOUND)
-                
             self._type_after_id = self.after(self._type_speed_ms, self._type_step)
         else:
             self._is_typing = False
+            stop_typewriter_loop()
             self.lbl_indicator.config(fg=COLOR_ACCENT)
 
     def show_choices(self, choices, on_select):
@@ -382,6 +407,7 @@ class DialogueBox(tk.Frame):
             on_select(val)
 
     def clear_choices(self):
+        stop_typewriter_loop()
         if hasattr(self, "_choices_frame") and self._choices_frame:
             try:
                 self._choices_frame.destroy()
@@ -395,6 +421,7 @@ class DialogueBox(tk.Frame):
         if self._type_after_id:
             self.after_cancel(self._type_after_id)
             self._type_after_id = None
+        stop_typewriter_loop()
 
         self.global_dialogue_log.append({
             "speaker": speaker,
@@ -416,7 +443,8 @@ class DialogueBox(tk.Frame):
         else:
             self.btn_next.pack_forget()
 
-        self._type_step()
+        # หน่วง 120ms เพื่อให้เสียง advance.wav เล่นจบรอบก่อนเริ่มสตรีมพิมพ์ดีดวนลูป
+        self._type_after_id = self.after(120, self._start_typing)
 
     def open_history_log(self):
         """เปิดหน้าต่างแสดงประวัติบทสนทนาย้อนหลัง (Backlog Modal)"""

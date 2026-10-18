@@ -9,3 +9,4 @@ env/
 .agent/
 _backup_clean/
 scripts/
+saves/*.json
